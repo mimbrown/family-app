@@ -1,9 +1,9 @@
 # See http://help.github.com/ignore-files/ for more about ignoring files.
 
 # compiled output
-/dist
-/tmp
-/out-tsc
+*/dist
+*/tmp
+*/out-tsc
 *.css
 *.map
 
@@ -36,7 +36,7 @@ testem.log
 /typings
 /deprecated
 *.env
-angular-app/src/resources/
+angular-app/src/assets/
 
 # e2e
 /e2e/*.js
