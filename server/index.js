@@ -239,15 +239,15 @@ const defineRoutes = () => {
     });
 
     app.use('/api', router);
-    app.use('/resources', express.static(path.join(__dirname, '../family-app/src/resources/public')));
-    // app.use('/resources', query.get({
+    // app.use('/assets', express.static(path.join(__dirname, '../angular-app/src/assets/public')));
+    // // app.use('/assets', query.get({
 
-    // }, {
-    //     next: true
-    // }));
-    app.use('/resources', express.static(path.join(__dirname, '../family-app/src/resources/protected')));
-    app.use('/resources', express.static(path.join(__dirname, '../family-app/src/resources/private')));
-    app.use('/', express.static(path.join(__dirname, '../family-app/dist')));
+    // // }, {
+    // //     next: true
+    // // }));
+    // app.use('/assets', express.static(path.join(__dirname, '../angular-app/src/assets/protected')));
+    // app.use('/assets', express.static(path.join(__dirname, '../angular-app/src/assets/private')));
+    app.use('/', express.static(path.join(__dirname, '../angular-app/dist')));
 
     switch (process.env.NODE_ENV) {
         case 'development':
@@ -256,7 +256,7 @@ const defineRoutes = () => {
         // app.use('/development', express.static('../site/pages'));
         // app.use('/styles', express.static('../site/styles'));
         // app.use('/scripts', express.static('../site/scripts'));
-        // app.use('/resources', express.static('../site/resources'));
+        // app.use('/assets', express.static('../site/assets'));
         // app.get('/development/:page/templates/all', (req, res, next) => {
         //     let dir = `../site/pages/${req.params.page}/templates/`,
         //         files = fs.readdirSync(dir),

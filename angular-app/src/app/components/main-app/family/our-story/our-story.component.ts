@@ -26,7 +26,7 @@ export class OurStoryComponent implements OnInit {
 
   onChapterSelect(value): void {
     let headers = new Headers({'Content-Type': 'application/html', 'Authorization': `Bearer ${localStorage.getItem('user')}`})
-    this.http.get(`resources/chapters/${value.chapter_num}.html`, {headers: headers})
+    this.http.get(`assets/public/chapters/${value.chapter_num}.html`, {headers: headers})
     .toPromise()
     .then(response => this.content = response.text());
   }
@@ -48,7 +48,7 @@ export class OurStoryComponent implements OnInit {
 
   set selectedChapter (selectedChapter) {
     this._selectedChapter = selectedChapter;
-    this.http.get(`resources/chapters/${selectedChapter.chapter_num}.html`)
+    this.http.get(`assets/public/chapters/${selectedChapter.chapter_num}.html`)
     .toPromise()
     .then(response => this.content = response.text());
   }

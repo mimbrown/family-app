@@ -22,7 +22,7 @@ export class ViewComponent implements OnInit {
   }
   display(writing: Writing) {
     let headers = new Headers({'Content-Type': 'application/html', 'Authorization': `Bearer ${localStorage.getItem('user')}`})
-    this.http.get(`resources/${writing.id}.${writing.mime}`, {headers: headers})
+    this.http.get(`assets/private/${writing.id}.${writing.mime}`, {headers: headers})
     .toPromise()
     .then(response => {
       let text = response.text();
