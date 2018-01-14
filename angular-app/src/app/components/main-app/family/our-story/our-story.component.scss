@@ -1,0 +1,26 @@
+@import 'color-scheme';
+
+.panel {
+    height: 100%;
+}
+
+.body {
+    padding: 10px 0px;
+    display: flex;
+    .sidebar {
+        width: 50px;
+        display: flex;
+        flex-direction: column;
+        button.fa {
+            text-align: center;
+            height: 50px;
+        }
+    }
+    #main-story {
+        overflow-y: scroll;
+        flex: 1;
+    }
+}
+.select {
+    width: 100px;
+}

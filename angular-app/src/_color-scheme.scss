@@ -1,0 +1,39 @@
+$lightest-red: #F28585;
+$light-red: #C84C4C;
+$red: #A82B2B;
+$dark-red: #830E0E;
+$darkest-red: #580000;
+$lightest-blue: #509191;
+$light-blue: #2E7878;
+$blue: #1A6565;
+$dark-blue: #084F4F;
+$darkest-blue: #003535;
+$lightest-lime: #C0E27C;
+$light-lime: #94BB47;
+$lime: #769D28;
+$dark-lime: #567A0D;
+$darkest-lime: #375200;
+$lightest-green: #6AC26A;
+$light-green: #3DA03D;
+$green: #228622;
+$dark-green: #0B690B;
+$darkest-green: #004600;
+$lightest-gold: #F2B685;
+$light-gold: #C8844C;
+$gold: #A8642B;
+$dark-gold: #83430E;
+$darkest-gold: #582800;
+$white: #EEE;
+$whitesmoke: whitesmoke;
+$gray: darken($whitesmoke, 5%);
+$background-white: rgba(250,250,250,0.9);
+$background-gray: #999999;
+
+$dark: #0e0e0e;
+$off-dark: #212121;
+
+$main: $red;
+$main-lighter: lighten($main, 10%);
+$main-light: lighten($main, 30%);
+
+$border: $light-gold;

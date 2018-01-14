@@ -1,0 +1,23 @@
+<div class="panel story-panel">
+    <div class="header">
+        <div class="title">
+            Our Story
+        </div>
+        <div class="fill"></div>
+        <dropdown store="chapter" displayField="display" [(selection)]="selectedChapter"></dropdown>
+        <!-- <select id="chapter-select"></select> -->
+    </div>
+    <div class="body">
+        <div class="sidebar">
+            <div class="fill"></div>
+            <button class="fa fa-angle-left fa-3x" (click)="cycle(-1)" *ngIf="!isFirst(selectedChapter)"></button>
+            <div class="fill"></div>
+        </div>
+        <div id="main-story" class="card" [innerHTML]="content | safeHtml"></div>
+        <div class="sidebar">
+            <div class="fill"></div>
+            <button class="fa fa-angle-right fa-3x" (click)="cycle(1)" *ngIf="!isLast(selectedChapter)"></button>
+            <div class="fill"></div>
+        </div>
+    </div>
+</div>

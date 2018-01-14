@@ -1,0 +1,18 @@
+@import 'color-scheme';
+
+:host {
+    flex: 1;
+    align-items: stretch;
+    // padding: 10px;
+    display: flex;
+}
+
+members {
+    width: 500px;
+    border-right: 1px solid $light-gold;
+    height: 100%;
+}
+our-story {
+    flex: 1;
+    height: 100%;
+}

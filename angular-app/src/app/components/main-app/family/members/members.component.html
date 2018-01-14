@@ -1,0 +1,105 @@
+<div class="panel">
+    <div class="header">
+        <div class="title">
+            Family Members
+        </div>
+    </div>
+    <div class="body">
+        <div *ngIf="!selectedRecord" class="all-profiles">
+            <div *ngFor="let record of data"
+            (click)="goToDetail(record)"
+            class="card">
+                <div class="top-bar">
+                    <div class="name">
+                        <p class="first">
+                            {{record.first_name}}
+                        </p>
+                        <p class="last">
+                            {{record.last_name}}
+                        </p>
+                    </div>
+                    <img class="profile-pic" [src]="record.profile_image" />
+                </div>
+                <p class="description">
+                    {{record.descriptions[record.descriptions.length - 1].description}}
+                </p>
+                <div class="select-profile fa fa-long-arrow-right fa-lg"></div>
+            </div>
+        </div>
+        <div *ngIf="selectedRecord" class="profile-main-display">
+            <button class="profile-back fa fa-angle-left fa-2x" (click)="backToMembers()"></button>
+            <div class="member-name">
+                {{selectedRecord.first_name}} {{selectedRecord.last_name}}
+            </div>
+            <div class="member-birth-date">
+                {{selectedRecord.birth_date | date:'MMMM dd, y'}}
+            </div>
+            <img class="profile-pic" [src]="selectedRecord.profile_image" />
+            <div class="card-flip">
+                <div class="flip-left">
+                    <div class="fill"></div>
+                    <button
+                        class="fa fa-angle-left fa-2x"
+                        *ngIf="!isFirst(currentDescription.id)"
+                        (click)="rotate(-1)"
+                    ></button>
+                    <div class="fill"></div>
+                </div>
+                <div class="card">
+                    <h2>
+                        {{currentDescription.title}}
+                    </h2>
+                    <p>
+                        {{currentDescription.description}}
+                    </p>
+                </div>
+                <div class="flip-right">
+                    <div class="fill"></div>
+                    <button
+                        class="fa fa-angle-right fa-2x"
+                        *ngIf="!isLast(currentDescription.id)"
+                        (click)="rotate(1)"
+                    ></button>
+                    <div class="fill"></div>
+                </div>
+            </div>
+            <!-- <div class="description">
+                <h2>
+                    {{title}}
+                </h2>
+                <p>
+                    {{description}}
+                </p>
+                <div class="cycle-buttons">
+                    <button class="cycle-left fa fa-angle-left fa-2x"></button>
+                    <button class="cycle-right fa fa-angle-right fa-2x"></button>
+                </div>
+            </div> -->
+            <table class="stats-table">
+                <tr>
+                    <th colspan="2">Stats</th>
+                </tr>
+                <tr>
+                    <td>Height</td>
+                    <td>{{selectedRecord.height}}</td>
+                </tr>
+                <tr>
+                    <td>Weight</td>
+                    <td>{{selectedRecord.weight}}</td>
+                </tr>
+                <tr>
+                    <td>Hair Color</td>
+                    <td>{{selectedRecord.hair_color}}</td>
+                </tr>
+                <tr>
+                    <td>Favorite Food</td>
+                    <td>{{selectedRecord.favorite_food}}</td>
+                </tr>
+                <tr>
+                    <td>Favorite Color</td>
+                    <td>{{selectedRecord.favorite_color}}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>

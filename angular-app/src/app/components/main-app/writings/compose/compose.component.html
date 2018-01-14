@@ -1,0 +1,12 @@
+<div class="fill"></div>
+<div class="main">
+  <div class="buttons">
+    <button (click)="compose=true" [class.active]="compose">Compose</button>
+    <button (click)="compose=false" [class.active]="!compose">Upload File</button>
+  </div>
+  <form class="main-form">
+    <input type="text" placeholder="Title">
+    <textarea class="compose-field"></textarea>
+  </form>
+</div>
+<div class="fill"></div>

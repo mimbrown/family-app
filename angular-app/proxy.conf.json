@@ -1,0 +1,11 @@
+{
+    "/api": {
+        "target": "http://localhost"
+    },
+    "/resources": {
+        "target": "http://localhost"
+    },
+    "/auth": {
+        "target": "http://localhost"
+    }
+}

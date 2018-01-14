@@ -1,0 +1,239 @@
+// @import 'color-scheme';
+
+// $bar-width: 4px;
+// $half-width: $bar-width/2;
+// $bar-color: $light-blue;
+// $shape-size: 60px;
+// $shape-color: $gold;
+// $shape-highlight-color: $lightest-gold;
+// $shape-active-color: $red;
+
+// :host {
+//     flex: 1;
+//     display: flex;
+//     flex-direction: column;
+//     justify-content: center;
+//     align-items: center;
+//     padding: 10px;
+// }
+
+// .container {
+//     flex: 1;
+//     display: flex;
+//     // align-items: stretch;
+//     justify-content: center;
+//     .person {
+//         display: flex;
+//         flex-direction: column;
+//         align-items: center;
+//         width: 150px;
+//         .vertical {
+//             flex: 1;
+//         }
+//     }
+//     .name {
+//         margin-bottom: 10px;
+//     }
+// }
+
+// .bar {
+//     background-color: $bar-color;
+//     &.bottom {
+//         border-bottom-left-radius: $half-width;
+//         border-bottom-right-radius: $half-width;
+//     }
+//     &.top {
+//         border-top-left-radius: $half-width;
+//         border-top-right-radius: $half-width;
+//     }
+// }
+
+// .vertical {
+//     width: $bar-width;
+// }
+
+// .horizontal {
+//     height: $bar-width;
+// }
+
+// .center {
+//     height: 30px;
+//     display: flex;
+//     justify-content: center;
+//     align-items: stretch;
+// }
+
+// .m {
+//     width: 0;
+// 	height: 0;
+// 	border-left: $shape-size/2 solid transparent;
+// 	border-right: $shape-size/2 solid transparent;
+//     border-bottom: $shape-size solid $shape-color;
+//     &:hover {
+//         border-bottom-color: $shape-highlight-color;
+//     }
+// }
+
+// .f {
+//     width: $shape-size;
+//     height: $shape-size;
+//     background-color: $shape-color;
+//     border-radius: 50%;
+//     &:hover {
+//         background-color: $shape-highlight-color;
+//     }
+// }
+
+// .m, .f {
+//     margin: 10px;
+//     &:hover {
+//         cursor: pointer;
+//     }
+// }
+
+// .active {
+//     .m {
+//         border-bottom-color: $shape-active-color;
+//     }
+//     .f {
+//         background-color: $shape-active-color;
+//     }
+// }
+
+@import 'color-scheme';
+
+$bar-width: 4px;
+$half-width: $bar-width/2;
+$bar-color: $light-blue;
+$shape-size: 50px;
+$shape-color: $gold;
+$shape-highlight-color: $lightest-gold;
+$shape-active-color: $red;
+
+:host {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+}
+
+.m {
+    width: 0;
+    height: 0;
+    border-left: $shape-size/2 solid transparent;
+    border-right: $shape-size/2 solid transparent;
+    border-bottom: $shape-size solid $shape-color;
+    &:hover {
+        border-bottom-color: $shape-highlight-color;
+    }
+}
+
+.f {
+    width: $shape-size;
+    height: $shape-size;
+    background-color: $shape-color;
+    border-radius: 50%;
+    &:hover {
+        background-color: $shape-highlight-color;
+    }
+}
+
+.m, .f {
+    margin: 10px;
+    &:hover {
+        cursor: pointer;
+    }
+}
+
+// .active {
+//     .m {
+//         border-bottom-color: $shape-active-color;
+//     }
+//     .f {
+//         background-color: $shape-active-color;
+//     }
+// }
+
+.container {
+    flex: 1;
+    display: flex;
+    // align-items: stretch;
+    justify-content: center;
+    &.main {
+        flex: 2;
+        align-self: stretch;
+    }
+    .ego {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 250px;
+        .date {
+            margin-bottom: 10px;
+            font-size: 12px;
+        }
+        .m {
+            border-left-width: $shape-size;
+            border-right-width: $shape-size;
+            border-bottom-width: $shape-size*2;
+            border-bottom-color: $shape-active-color;
+        }
+        .f {
+            width: $shape-size*2;
+            height: $shape-size*2;
+            background-color: $shape-active-color;
+        }
+    }
+    .person {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 150px;
+    }
+    .vertical {
+        flex: 1;
+    }
+    .name {
+        margin-bottom: 10px;
+    }
+}
+
+.group {
+    flex: 1;
+    display: flex;
+    &.siblings {
+        justify-content: flex-end;
+    }
+    .person {
+        width: 80px;
+    }
+}
+
+.bar {
+    background-color: $bar-color;
+    &.bottom {
+        border-bottom-left-radius: $half-width;
+        border-bottom-right-radius: $half-width;
+    }
+    &.top {
+        border-top-left-radius: $half-width;
+        border-top-right-radius: $half-width;
+    }
+}
+
+.vertical {
+    width: $bar-width;
+}
+
+.horizontal {
+    height: $bar-width;
+}
+
+.center {
+    height: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+}

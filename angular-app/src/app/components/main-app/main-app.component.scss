@@ -1,0 +1,161 @@
+@import 'color-scheme';
+
+:host {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    position: relative;
+}
+
+.menu-header {
+  background-color: $red;
+  padding: 5px;
+  display: flex;
+  position: relative;
+  text-align: center;
+  align-items: center;
+  .fa-bars {
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+  }
+  .main-title {
+    flex: 1;
+    font: 400 30px 'Arizonia', Helvetica, sans-serif;
+  }
+}
+
+$menu-width: 80%;
+$mask-width: 100% - $menu-width;
+
+.nav-menu {
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  right: 100%;
+  transition: right 200ms;
+  display: flex;
+  z-index: 1000;
+  .options {
+    // background-color: $red;
+    background: url(/resources/images/carol_bridal.jpg) no-repeat center center;
+    background-size: cover;
+    // filter: grayscale(100%);
+    width: $menu-width;
+    height: 100%;
+  }
+  .mask {
+    width: $mask-width;
+    background-color: gray;
+    opacity: 0.5;
+  }
+  .user {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    color: white;
+    // opacity: 0.9;
+    background-color: $red;
+    width: 100%;
+    padding: 5px;
+    font-size: 40px;
+    // font: 400 20px 'Arizonia', Helvetica, sans-serif;
+  }
+  nav {
+    width: 100%;
+    // background-color: $dark;
+    display: flex;
+    flex-direction: column;
+    font-weight: bold;
+    align-items: center;
+    padding: 10px;
+    a {
+      padding: 15px 15px;
+      text-decoration: none;
+      // background-color: $dark-gold;
+      background-color: $red;
+      // opacity: 0.3;
+      flex: 1;
+      width: 80%;
+      border-radius: 5px;
+      // max-width: 150px;
+      margin: 10px 0;
+      text-align: center;
+      // &:first-child {
+      //   margin-left: 3px;
+      // }
+    }
+    a:visited,
+    a:link {
+      color: $lightest-gold;
+    }
+    a:hover {
+      color: $dark-gold;
+      background-color: $lightest-gold;
+    }
+    a.active {
+      color: $dark-gold;
+      background-color: $light-gold;
+    }
+  }
+  &.shown {
+    right: 0;
+  }
+}
+
+// nav {
+//   width: 100%;
+//   background-color: $dark;
+//   display: flex;
+//   font-weight: bold;
+//   border-bottom: 1px solid $light-gold;
+//   a {
+//     padding: 5px 10px;
+//     text-decoration: none;
+//     background-color: $dark-gold;
+//     flex: 1;
+//     max-width: 150px;
+//     margin: 3px 3px 3px 0;
+//     text-align: center;
+//     &:first-child {
+//       margin-left: 3px;
+//     }
+//   }
+//   a:visited,
+//   a:link {
+//     color: $lightest-gold;
+//   }
+//   a:hover {
+//     color: $dark-gold;
+//     background-color: $lightest-gold;
+//   }
+//   a.active {
+//     color: $dark-gold;
+//     background-color: $light-gold;
+//   }
+// }
+
+// .fa-sign-out {
+//   width: 24px;
+//   margin-left: 10px;
+// }
+// .greeting {
+  
+// }
+.profile-pic {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-left: 10px;
+}
+.name {
+  font-weight: bold;
+  text-transform: capitalize;
+}
+
+// @media only screen and (min-width: 600px) {
+//   .menu-header {
+//     display: none;
+//   }
+// }

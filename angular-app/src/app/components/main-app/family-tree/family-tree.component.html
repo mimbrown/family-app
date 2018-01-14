@@ -1,0 +1,86 @@
+<!-- <div class="container parents">
+  <div *ngFor="let parent of parents" class="person">
+    <div [class]="parent.gender" (click)="id = parent.id"></div>
+    <div class="name">{{displayName(parent)}}</div>
+    <div class="bar top vertical"></div>
+  </div>
+</div>
+<div *ngIf="parents.length" class="bar horizontal" [style.width]="parentsWidth"></div>
+<div *ngIf="parents.length" class="center"><div class="bar vertical"></div></div>
+<div *ngIf="parents.length" class="bar horizontal" [style.width]="siblingTopWidth" [style.margin-right]="siblingTopMargin"></div>
+<div class="container">
+  <div *ngFor="let sibling of leftSiblings" class="person">
+    <div class="bar bottom vertical"></div>
+    <div [class]="sibling.gender" (click)="id = sibling.id"></div>
+    <div class="name">{{displayName(sibling)}}</div>
+    <div *ngIf="main.length > 1" class="fill"></div>
+  </div>
+  <div *ngFor="let m of main; let i = index;" class="person" [class.active]="isEgo(m)">
+    <div *ngIf="parents.length" [class]="isEgo(m) ? 'bar bottom vertical' : 'fill'"></div>
+    <div [class]="m.gender" (click)="id = m.id"></div>
+    <div class="name">{{displayName(m)}}</div>
+    <div *ngIf="main.length > 1" class="bar top vertical"></div>
+  </div>
+  <div *ngFor="let sibling of rightSiblings" class="person">
+    <div class="bar bottom vertical"></div>
+    <div [class]="sibling.gender" (click)="id = sibling.id"></div>
+    <div class="name">{{displayName(sibling)}}</div>
+    <div *ngIf="main.length > 1" class="fill"></div>
+  </div>
+  <div *ngIf="needsFill" class="person"></div>
+</div>
+<div *ngIf="main.length > 1" class="bar horizontal" [style.width]="siblingBottomWidth" [style.margin-left]="siblingBottomMargin"></div>
+<div *ngIf="children.length" class="center"><div class="bar vertical"></div></div>
+<div *ngIf="children.length" class="bar horizontal" [style.width]="childrenWidth"></div>
+<div class="container children">
+  <div *ngFor="let child of children" class="person">
+    <div class="bar bottom vertical"></div>
+    <div [class]="child.gender" (click)="id = child.id"></div>
+    <div class="name">{{displayName(child)}}</div>
+  </div>
+</div> -->
+<div class="container parents">
+  <div *ngFor="let parent of parents" class="person">
+    <div [class]="parent.gender" (click)="id = parent.id"></div>
+    <div class="name">{{displayName(parent)}}</div>
+    <div class="bar top vertical"></div>
+  </div>
+</div>
+<div [class.bar]="parents.length" class="horizontal" [style.width]="parentsWidth"></div>
+<div class="center"><div *ngIf="parents.length" class="bar vertical"></div></div>
+<div [class.bar]="parents.length" class="horizontal" [style.width]="siblingsWidth" [style.margin-right]="siblingsMargin"></div>
+<div class="container main">
+  <div class="group siblings">
+      <div *ngFor="let sibling of siblings" class="person">
+        <div class="bar bottom vertical"></div>
+        <div [class]="sibling.gender" (click)="id = sibling.id"></div>
+        <div class="name">{{sibling.first_name}}</div>
+        <div class="fill"></div>
+      </div>
+  </div>
+  <div class="ego">
+    <div [class.bar]="parents.length" class="bottom vertical"></div>
+    <div [class]="ego.gender"></div>
+    <div class="name">{{displayFullName(ego)}}</div>
+    <div class="date">{{displayDateRange(ego)}}</div>
+    <div [class.bar]="children.length" class="top vertical"></div>
+  </div>
+  <div class="group spouses">
+    <div *ngFor="let spouse of spouses" class="person">
+      <div class="fill"></div>
+      <div [class]="spouse.gender" (click)="id = spouse.id"></div>
+      <div class="name">{{spouse.first_name}}</div>
+      <div class="bar top vertical"></div>
+    </div>
+  </div>
+</div>
+<div [class.bar]="children.length" class="horizontal" [style.width]="spousesWidth" [style.margin-left]="spousesMargin"></div>
+<div class="center"><div *ngIf="children.length" class="bar vertical"></div></div>
+<div [class.bar]="children.length" class="horizontal" [style.width]="childrenWidth"></div>
+<div class="container children">
+  <div *ngFor="let child of children" class="person">
+    <div class="bar bottom vertical"></div>
+    <div [class]="child.gender" (click)="id = child.id"></div>
+    <div class="name">{{displayName(child)}}</div>
+  </div>
+</div>

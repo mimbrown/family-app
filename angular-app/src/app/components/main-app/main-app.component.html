@@ -1,0 +1,35 @@
+<div class="menu-header">
+  <button class="fa fa-bars fa-lg" (click)="menuShown = true"></button>
+  <div class="main-title">The Browns (c. 2015)</div>
+</div>
+<div class="nav-menu" [class.shown]="menuShown">
+  <div class="options">
+    <div class="user"><span class="name">{{user.name}}</span> <img class="profile-pic" [src]="user.profile_image" /></div>
+    <div class="fill"></div>
+    <nav>
+      <!-- <a *ngFor="let route of routes" routerLink="route.route" routerLinkActive="active">{{route.title}}</a> -->
+      <a routerLink="/family" routerLinkActive="active" (click)="menuShown = false">Family</a>
+      <a routerLink="/history" routerLinkActive="active" (click)="menuShown = false">History</a>
+      <a routerLink="/writings" routerLinkActive="active" (click)="menuShown = false">Writings</a>
+      <a routerLink="/family-tree" routerLinkActive="active" (click)="menuShown = false">Family Tree</a>
+    </nav>
+    <!-- <div class="greeting">Hello <span class="name">{{user.name}}</span></div> -->
+    <!-- <img class="profile-pic" [src]="user.profile_image" /> -->
+    <button class="fa fa-sign-out" (click)="logout()"></button>
+  </div>
+  <div class="mask" (click)="menuShown = false"></div>
+</div>
+<!-- <div class="header">
+  <div class="title">The Browns (c. 2015)</div>
+  <div class="fill"></div>
+  <div class="greeting">Hello <span class="name">{{user.name}}</span></div>
+  <img class="profile-pic" [src]="user.profile_image" />
+  <button class="fa fa-sign-out" (click)="logout()"></button>
+</div> -->
+<!-- <nav>
+    <a routerLink="/family" routerLinkActive="active">Family</a>
+    <a routerLink="/history" routerLinkActive="active">History</a>
+    <a routerLink="/writings" routerLinkActive="active">Writings</a>
+    <a routerLink="/family-tree" routerLinkActive="active">Family Tree</a>
+</nav> -->
+<router-outlet></router-outlet>

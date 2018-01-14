@@ -1,0 +1,28 @@
+<!-- <div class="profile" *ngFor="let member of members" (click)="activeMember = member">
+  <div class="profile-display">
+    <img [src]="member.profile_image" />
+    <div class="name">{{member.first_name}}</div>
+  </div>
+  <div class="password-input" *ngIf="member === activeMember">
+    <input type="password" name="password" [(ngModel)]="password" (keyup.enter)="login()" autofocus>
+    <button class="fa fa-angle-right" (click)="login()"></button>
+  </div>
+</div> -->
+
+<div class="logo">
+  The Browns
+</div>
+<form (ngSubmit)="onSubmit()" #loginForm="ngForm">
+  <div class="input-wrap">
+    <div class="fa fa-user"></div>
+    <input type="text" placeholder="Username" name="username" [(ngModel)]="login.username" autofocus required>
+  </div>
+  <div class="input-wrap">
+    <div class="fa fa-unlock-alt"></div>
+    <input type="password" placeholder="Password" name="password" [(ngModel)]="login.password" required>
+  </div>
+  <div class="segmented button-wrap">
+    <button type="submit" [disabled]="!loginForm.form.valid">Sign In</button>
+    <button [disabled]="!login.username">Forgot Password?</button>
+  </div>
+</form>

@@ -1,0 +1,26 @@
+@import 'color-scheme';
+
+:host {
+    flex: 1;
+    position: relative;
+    // align-items: stretch;
+    // // padding: 10px;
+    // display: flex;
+}
+
+.toolbar {
+    position: absolute;
+    top: 10px;
+    left: 0;
+    background-color: $dark;
+    // padding: 5px;
+    display: flex;
+    z-index: 500;
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+    .fa {
+        flex: 1;
+        margin: 5px 15px;
+        // color: $gold;
+    }
+}

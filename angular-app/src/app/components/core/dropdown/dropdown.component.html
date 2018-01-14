@@ -1,0 +1,14 @@
+<!-- <button class="dropdown-button" (focus)="show()" (focusout)="hide()">
+  <span class="fa fa-angle-down fa-lg"></span>
+</button>
+<div *ngIf="isShown">
+    <div *ngFor="let record of records" (click)="goToDetail(hero)" class="search-result" >
+      {{record[displayField]}}
+    </div>
+</div> -->
+
+<select [ngModel]="selection" (ngModelChange)="change($event)">
+  <option *ngFor="let record of records" [ngValue]="record">
+    {{record[displayField]}}
+  </option>
+</select>

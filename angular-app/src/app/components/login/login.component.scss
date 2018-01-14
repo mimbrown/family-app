@@ -1,0 +1,103 @@
+@import 'color-scheme';
+
+:host {
+    display: flex;
+    height: 100%;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: url(/resources/images/michael_and_carol.jpg) no-repeat center center fixed;
+    background-size: cover;
+}
+
+$border-size: 10px;
+$transition: 200ms;
+
+.logo {
+    color: $red;
+    // font-size: 50px;
+    font: 400 50px 'Arizonia', Helvetica, sans-serif;
+    margin: 10px 0;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.input-wrap {
+    border-radius: $border-size;
+    background-color: $red;
+    margin: 10px 0;
+    border: 1px solid $red;
+    .fa {
+        text-align: center;
+        margin: 0 15px;
+    }
+}
+.button-wrap {
+    width: 220px;
+    height: 20px;
+    margin: 10px 0;
+    display: flex;
+    justify-content: space-between;
+    button {
+        flex: 1;
+        background-color: $red;
+    }
+}
+
+input {
+    // margin-left: 30px;
+    padding: 5px 10px;
+    font-size: 14px;
+    width: 200px;
+    border: none;
+    border-top-right-radius: $border-size;
+    border-bottom-right-radius: $border-size;
+    transition-duration: $transition;
+    &::placeholder {
+        font-style: italic;
+        font-size: 12px;
+    }
+    &:focus {
+        padding-left: 15px;
+        outline: none;
+        transition-duration: $transition;
+        // &::-webkit-input-placeholder { color:transparent; }
+        // &:-moz-placeholder { color:transparent; } /* FF 4-18 */
+        // &::-moz-placeholder { color:transparent; } /* FF 19+ */
+        // &:-ms-input-placeholder { color:transparent; }
+    }
+}
+
+.profile {
+    // flex: 1;
+    margin: 10px;
+    text-align: center;
+    background-color: $off-dark;
+    font-size: 30px;
+    .profile-display {
+        cursor: pointer;
+    }
+    .name {
+        margin: 20px 0;
+    }
+    img {
+        width: 200px;
+    }
+}
+
+.password-input {
+    display: flex;
+    padding: 0px 10px 10px;
+    width: 100%;
+    input {
+        flex: 1;
+    }
+    button {
+        width: 30px;
+    }
+}

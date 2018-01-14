@@ -1,0 +1,71 @@
+@import 'color-scheme';
+
+:host {
+    display: flex;
+    height: 100%;
+}
+
+.reading-view {
+    width: 700px;
+    height: 100%;
+    background-color: $off-dark;
+    padding: 40px;
+    overflow: scroll;
+    border-right: 1px solid $border;
+    .reading-content {
+
+    }
+}
+.selection-view {
+    flex: 1;
+    .list {
+        height: 100%;
+        overflow: scroll;
+        display: flex;
+        flex-wrap: wrap;
+        align-content: flex-start;
+        text-align: center;
+        padding: 5px;
+        .item {
+            margin: 5px;
+            padding: 5px;
+            background: $off-dark;
+            width: 150px;
+            height: 200px;
+            cursor: pointer;
+            border: 1px solid $lightest-gold;
+            border-radius: 5px;
+            .title {
+                font-size: 20px;
+                margin: 5px 0;
+            }
+            .author, .date {
+                font-size: 12px;
+                color: gray;
+            }
+            .display {
+                font-size: 70px;
+                height: 100px;
+                padding: 9px 0;
+            }
+            .poem {
+                &::before {
+                    content: "[ P ]";
+                }
+                color: $light-blue;
+            }
+            .story {
+                &::before {
+                    content: "[ S ]";
+                }
+                color: $light-red;
+            }
+            .letter {
+                &::before {
+                    content: "[ L ]";
+                }
+                color: $light-lime;
+            }
+        }
+    }
+}
