@@ -1,0 +1,56 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Test API",
+    "description": "An API for testing purposes.",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/test": {
+      "description": "Test path",
+      "get": {
+        "description": "A test GET path",
+        "parameters": [
+          {
+            "name": "filters",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "field"
+                ],
+                "properties": {
+                  "field": {
+                    "type": "string"
+                  },
+                  "operator": {
+                    
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "/test/{id}": {
+      "description": "Another test path",
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "post": {
+
+      }
+    }
+  }
+}

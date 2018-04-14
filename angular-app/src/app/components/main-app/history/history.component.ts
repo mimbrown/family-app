@@ -11,7 +11,7 @@ import * as L from 'leaflet';
 @Component({
   selector: 'app-history',
   templateUrl: './history.component.html',
-  styleUrls: ['./history.component.css'],
+  styleUrls: ['./history.component.scss'],
   providers: [DatePipe]
 })
 export class HistoryComponent implements OnInit {

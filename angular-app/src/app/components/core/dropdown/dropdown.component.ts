@@ -3,7 +3,7 @@ import { Component, OnInit, Injector, EventEmitter, Input, Output } from '@angul
 @Component({
   selector: 'dropdown',
   templateUrl: './dropdown.component.html',
-  styleUrls: ['./dropdown.component.css'],
+  styleUrls: ['./dropdown.component.scss'],
   inputs: [
     'store',
     'displayField',

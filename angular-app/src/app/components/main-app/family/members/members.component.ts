@@ -9,7 +9,7 @@ import { Member } from 'app/models/member';
 @Component({
   selector: 'members',
   templateUrl: './members.component.html',
-  styleUrls: ['./members.component.css']
+  styleUrls: ['./members.component.scss']
 })
 export class MembersComponent implements OnInit {
   private store: MemberService;

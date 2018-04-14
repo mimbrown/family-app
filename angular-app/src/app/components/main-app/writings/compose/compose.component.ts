@@ -3,7 +3,7 @@ import { Component, OnInit } from '@angular/core';
 @Component({
   selector: 'app-compose',
   templateUrl: './compose.component.html',
-  styleUrls: ['./compose.component.css']
+  styleUrls: ['./compose.component.scss']
 })
 export class ComposeComponent implements OnInit {
   compose: boolean = true;

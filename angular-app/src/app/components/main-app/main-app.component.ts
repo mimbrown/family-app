@@ -4,21 +4,21 @@ import { Router } from '@angular/router';
 import { User } from 'app/user.service';
 import { AuthenticationService } from 'app/services/authentication.service';
 
-// const routes = [
-//   {route: '/family', title: 'Family'},
-//   {route: '/history', title: 'History'},
-//   {route: '/writings', title: 'Writings'},
-//   {route: '/family-tree', title: 'Family Tree'}
-// ]
+const routes = [
+  {route: '/family', title: 'Family', icon: 'users'},
+  {route: '/history', title: 'History', icon: 'history'},
+  {route: '/writings', title: 'Writings', icon: 'edit'},
+  {route: '/family-tree', title: 'Family Tree', icon: 'tree'}
+]
 
 @Component({
   selector: 'app-main-app',
   templateUrl: './main-app.component.html',
-  styleUrls: ['./main-app.component.css']
+  styleUrls: ['./main-app.component.scss']
 })
 export class MainAppComponent implements OnInit {
-  private menuShown: boolean = false;
-  // private routes = routes;
+  menuShown: boolean = false;
+  routes = routes;
 
   constructor(
     private user: User,

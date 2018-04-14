@@ -1,4 +1,4 @@
-// @import 'color-scheme';
+// @import '~sass/abstracts/abstracts';
 
 // $bar-width: 4px;
 // $half-width: $bar-width/2;
@@ -100,7 +100,7 @@
 //     }
 // }
 
-@import 'color-scheme';
+@import '~sass/abstracts/abstracts';
 
 $bar-width: 4px;
 $half-width: $bar-width/2;

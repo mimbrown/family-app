@@ -1,0 +1,29 @@
+.selectable:hover {
+  cursor: pointer;
+  background-color: $selectable-background;
+}
+
+.selectable-lite:hover {
+  cursor: pointer;
+  color: $selectable-color;
+}
+
+.selected {
+  color: $selected-background;
+}
+
+.selected {
+  color: $selected-color;
+}
+
+// .subdued {
+//   color: lightgray;
+// }
+
+.flex {
+  display: flex;
+}
+
+.fill {
+  flex: 1;
+}

@@ -1,3 +1,5 @@
+// Color palette
+
 $lightest-red: #F28585;
 $light-red: #C84C4C;
 $red: #A82B2B;
@@ -23,17 +25,26 @@ $light-gold: #C8844C;
 $gold: #A8642B;
 $dark-gold: #83430E;
 $darkest-gold: #582800;
-$white: #EEE;
-$whitesmoke: whitesmoke;
-$gray: darken($whitesmoke, 5%);
-$background-white: rgba(250,250,250,0.9);
-$background-gray: #999999;
 
-$dark: #0e0e0e;
+// Greyscale
+
+$white: #FFF;
+$off-white: whitesmoke;
+$gray: darken($off-white, 5%);
 $off-dark: #212121;
+$dark: #0e0e0e;
+$black: #000;
 
 $main: $red;
-$main-lighter: lighten($main, 10%);
-$main-light: lighten($main, 30%);
+$main-lighter: mix(white, $main, 10%);
+$main-light: mix(white, $main, 30%);
+
+// Themes
 
 $border: $light-gold;
+
+$selectable-background: $light-gold;
+$selectable-color: $selectable-background;
+
+$selected-background: $light-blue;
+$selected-color: $selected-background;

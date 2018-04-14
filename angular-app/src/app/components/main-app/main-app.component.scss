@@ -1,4 +1,4 @@
-@import 'color-scheme';
+@import '~sass/abstracts/abstracts';
 
 :host {
     display: flex;
@@ -7,100 +7,58 @@
     position: relative;
 }
 
-.menu-header {
-  background-color: $red;
-  padding: 5px;
-  display: flex;
-  position: relative;
+.main-title {
+  flex: 1;
+  margin-right: 24px;
   text-align: center;
-  align-items: center;
-  .fa-bars {
-    position: absolute;
-    left: 15px;
-    top: 0;
-    bottom: 0;
-  }
-  .main-title {
-    flex: 1;
-    font: 400 30px 'Arizonia', Helvetica, sans-serif;
-  }
+  font: 400 30px 'Arizonia', Helvetica, sans-serif;
 }
 
-$menu-width: 80%;
-$mask-width: 100% - $menu-width;
-
 .nav-menu {
-  height: 100%;
-  width: 100%;
+  height: 100vh;
+  width: 300px;
+  max-width: 80vw;
   position: absolute;
-  right: 100%;
-  transition: right 200ms;
+  left: -100vw;
+  transition: left 200ms;
   display: flex;
+  flex-direction: column;
+  align-items: center;
   z-index: 1000;
-  .options {
-    // background-color: $red;
-    background: url("/assets/public/images/carol_bridal.jpg") no-repeat center center;
-    background-size: cover;
-    // filter: grayscale(100%);
-    width: $menu-width;
-    height: 100%;
+  background-color: $white;
+  .title {
+    text-transform: capitalize;
   }
-  .mask {
-    width: $mask-width;
-    background-color: gray;
-    opacity: 0.5;
-  }
-  .user {
-    display: flex;
-    justify-content: space-evenly;
-    align-items: center;
-    color: white;
-    // opacity: 0.9;
-    background-color: $red;
+  .menu-button-group {
     width: 100%;
-    padding: 5px;
-    font-size: 40px;
-    // font: 400 20px 'Arizonia', Helvetica, sans-serif;
-  }
-  nav {
-    width: 100%;
-    // background-color: $dark;
     display: flex;
     flex-direction: column;
+  }
+  .menu-button {
+    padding: 15px 15px;
+    text-decoration: none;
     font-weight: bold;
-    align-items: center;
-    padding: 10px;
-    a {
-      padding: 15px 15px;
-      text-decoration: none;
-      // background-color: $dark-gold;
-      background-color: $red;
-      // opacity: 0.3;
-      flex: 1;
-      width: 80%;
-      border-radius: 5px;
-      // max-width: 150px;
-      margin: 10px 0;
-      text-align: center;
-      // &:first-child {
-      //   margin-left: 3px;
-      // }
-    }
-    a:visited,
-    a:link {
-      color: $lightest-gold;
-    }
-    a:hover {
-      color: $dark-gold;
-      background-color: $lightest-gold;
-    }
-    a.active {
-      color: $dark-gold;
-      background-color: $light-gold;
-    }
+    font-size: 20px;
+    background-color: transparent;
+    color: $red;
+    flex: 1;
+    margin: 10px;
+    text-align: left;
+  }
+  a:visited,
+  a:link {
+    color: $red;
+  }
+  a:hover {
+    color: $dark-gold;
+    background-color: $lightest-gold;
+  }
+  a.active {
+    color: $lightest-gold;
+    // background-color: $light-gold;
   }
   &.shown {
-    right: 0;
+    left: 0;
   }
 }
 
@@ -148,10 +106,6 @@ $mask-width: 100% - $menu-width;
   height: 40px;
   border-radius: 50%;
   margin-left: 10px;
-}
-.name {
-  font-weight: bold;
-  text-transform: capitalize;
 }
 
 // @media only screen and (min-width: 600px) {

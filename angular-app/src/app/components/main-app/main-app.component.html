@@ -1,23 +1,29 @@
-<div class="menu-header">
-  <button class="fa fa-bars fa-lg" (click)="menuShown = true"></button>
+<div class="header">
+  <button class="icon fa fa-bars fa-lg" (click)="menuShown = true"></button>
   <div class="main-title">The Browns (c. 2015)</div>
 </div>
+<div class="mask" [class.active]="menuShown" (click)="menuShown = false"></div>
 <div class="nav-menu" [class.shown]="menuShown">
-  <div class="options">
-    <div class="user"><span class="name">{{user.name}}</span> <img class="profile-pic" [src]="user.profile_image" /></div>
+  <div class="header">
+    <div class="title">
+      {{user.name}}
+    </div>
     <div class="fill"></div>
-    <nav>
-      <!-- <a *ngFor="let route of routes" routerLink="route.route" routerLinkActive="active">{{route.title}}</a> -->
-      <a routerLink="/family" routerLinkActive="active" (click)="menuShown = false">Family</a>
-      <a routerLink="/history" routerLinkActive="active" (click)="menuShown = false">History</a>
-      <a routerLink="/writings" routerLinkActive="active" (click)="menuShown = false">Writings</a>
-      <a routerLink="/family-tree" routerLinkActive="active" (click)="menuShown = false">Family Tree</a>
-    </nav>
-    <!-- <div class="greeting">Hello <span class="name">{{user.name}}</span></div> -->
-    <!-- <img class="profile-pic" [src]="user.profile_image" /> -->
-    <button class="fa fa-sign-out" (click)="logout()"></button>
+    <img class="profile-pic" [src]="user.profile_image" />
   </div>
-  <div class="mask" (click)="menuShown = false"></div>
+  <nav class="menu-button-group">
+    <a *ngFor="let route of routes" [class]="'menu-button fa fa-' + route.icon" [routerLink]="route.route" routerLinkActive="active" (click)="menuShown = false">
+      {{route.title}}
+    </a>
+  </nav>
+  <div class="fill"></div>
+  <!-- <div class="greeting">Hello <span class="name">{{user.name}}</span></div> -->
+  <!-- <img class="profile-pic" [src]="user.profile_image" /> -->
+  <div class="menu-button-group">
+    <button class="menu-button fa fa-sign-out" (click)="logout()">
+      Sign Out
+    </button>
+  </div>
 </div>
 <!-- <div class="header">
   <div class="title">The Browns (c. 2015)</div>

@@ -225,9 +225,10 @@ const defineRoutes = () => {
         .get(query.get({
             from: 'chapter',
             fields: [
-                `'Chapter ' || chapter_num || ' - ' || title AS display`,
+                `'Chapter ' || chapter_num AS display`,
                 'chapter_num AS value'
-            ]
+            ],
+            orderBy: ['chapter_num']
         }));
 
     router.all('*', (req, res, next) => {
