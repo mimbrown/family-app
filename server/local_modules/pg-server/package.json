@@ -12,5 +12,8 @@
     "async": "^2.5.0",
     "pg": "^7.2.0",
     "handlebars": "^4.0.10"
+  },
+  "optionalDependencies": {
+    "commander": "^2.15.1"
   }
 }

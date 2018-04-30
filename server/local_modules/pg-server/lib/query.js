@@ -1,21 +1,13 @@
-/* jshint esversion: 6 */
+'use strict'
 
-'use strict';
+const { Pool } = require('pg')
+const pool = new Pool()
 
-const { Pool } = require('pg');
-const pool = new Pool();
+async function execute (query, values) {
+  const client = await pool.connect()
+  const response = await client.query(query, values)
+  await client.release()
+  return response
+}
 
-const execute = (query, values) =>
-    pool.connect()
-        .then(client => client.query(query, values)
-            .then(res => {
-                client.release();
-                return Promise.resolve(res);
-            })
-            .catch(err => {
-                client.release();
-                return Promise.reject(err);
-            })
-        );
-
-module.exports = { execute };
+module.exports = { execute }

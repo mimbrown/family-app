@@ -26,7 +26,7 @@
                     "type": "string"
                   },
                   "operator": {
-                    
+                    "type": "string"
                   }
                 }
               }
@@ -48,8 +48,17 @@
           }
         }
       ],
-      "post": {
-
+      "put": {
+        "description": "A test PUT path",
+        "parameters": [
+          {
+            "name": "safe",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ]
       }
     }
   }
