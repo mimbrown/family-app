@@ -26,6 +26,9 @@ node_modules
 !.vscode/launch.json
 !.vscode/extensions.json
 
+# linting
+*.eslint*
+
 # misc
 */.sass-cache
 /connect.lock
