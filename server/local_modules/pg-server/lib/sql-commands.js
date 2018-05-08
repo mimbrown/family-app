@@ -4,15 +4,16 @@
 const Handlebars = require('handlebars')
 const fs = require('fs')
 
-// const wordRegEx = /\w+/i
+const wordRegEx = /^\w+$/i
 const fieldRegEx = /^(?:"?(\w+)"?\.)?("?\w+"?)(?:(?:\s+as)?\s+"?(\w+)"?)?$/i
 const firstWord = /^(\w+)/
 const lastWord = /(\w+)$/
+const joinRegEx = /^(?:natural\s+)?(?:(?:left|right|full|cross)\s+)?(?:(?:inner|outer)\s+)?join/i
 // const sorterRegEx = /^(\w+)(?:\s+(asc|desc))?$/i
 
 const ensure = (definition, Class) => definition instanceof Class ? definition : new Class(definition)
 
-const notObject = item => {
+const stringOrFn = item => {
   let type = typeof item
   return type === 'string' || type === 'function'
 }
@@ -22,7 +23,7 @@ const notObject = item => {
 const compileStrings = item => {
   if (typeof item === 'string') {
     return item.includes('{{') ? Handlebars.compile(item) : item
-  } else if (typeof item === 'object') {
+  } else if (typeof item === 'object' && !(item instanceof Base)) {
     for (let k in item) {
       item[k] = compileStrings(item[k])
     }
@@ -30,8 +31,10 @@ const compileStrings = item => {
   return item
 }
 
-const resolve = (item, incoming) => {
-  if (typeof item === 'function') {
+const resolve = (item, incoming, join) => {
+  if (!item) {
+    return item
+  } else if (typeof item === 'function') {
     incoming.$begin()
     try {
       item = item(incoming)
@@ -45,6 +48,8 @@ const resolve = (item, incoming) => {
     }
   } else if (typeof item.resolve === 'function') {
     return item.resolve(incoming)
+  } else if (Array.isArray(item)) {
+    return resolveArray(item, incoming, join)
   } else {
     return item
   }
@@ -166,6 +171,15 @@ class Database {
   }
 }
 
+class Base {
+  constructor (definition) {
+    if (!definition) {
+      throw new Error('Queries require a definition to be instantiated')
+    }
+    this.definition = compileStrings(this.prepare ? this.prepare(definition) : definition)
+  }
+}
+
 class Connection {
   constructor (definitions) {
     if (typeof definitions === 'string') {
@@ -177,6 +191,18 @@ class Connection {
 
   instanciateQueries () {
     const getRelation = (table, schema = 'public') => this.database.getRelation(table, schema)
+
+    const createQuery = (definition, defaultType) => {
+      let type = definition.type || defaultType
+      delete definition.type
+      type = type.toLowerCase()
+      type = type[0].toUpperCase() + type.slice(1)
+      if (this[type]) {
+        return new this[type](definition)
+      } else {
+        throw new Error(`No query of type '${type}' detected.`)
+      }
+    }
 
     class List {
       constructor (items) {
@@ -217,406 +243,121 @@ class Connection {
       }
     }
 
-    class Fields extends List {
-      // constructor (items) {
-      //     super(items)
-      //     this.names = []
-      // }
-      init (items) {
-        this.names = []
-        super.init(items)
-      }
-      prepare (item) {
-        let sql, name
-        switch (typeof item) {
-        case 'function': 
-          sql = item
-          name = null
-          break
-        case 'string':
-          item = item.trim()
-          sql = fieldRegEx.exec(item)
-          if (sql) {
-            name = sql[3] || sql[2]
-            sql = sql[0]
-          } else {
-            name = getRawFieldName(item)
-            sql = item
-          }
-          break
+    class From extends Base {
+      prepare (definition) {
+        let table = definition.table
+        if (typeof table === 'object') {
+          definition.table = createQuery(table, 'select')
         }
-        if (name) {
-          this.names.push(name)
-        }
-        return sql
-      }
-    }
-
-    class From {
-      constructor (definition) {
-        // if (typeof definition === 'string') {
-        //   if (compilable(definition)) {
-        //     definition = Handlebars.compile(definition)
-        //   } else {
-        //     definition = this.parse(definition)
-        //   }
-        // }
-        this.definition = definition
-        // Object.assign(this, definition)
-        // let { table, schema, alias, fields } = this
-        // // let i, len, field
-        // if (table) {
-        //   this.table = table = this.prepareTable(table, schema)
-        //   // if (fields) {
-        //   //     this.fields = []
-        //   //     for (i = 0, len = fields.length i < len i++) {
-        //   //         try {
-        //   //             this.fields[i] = parseField(fields[i])
-        //   //         } catch (e) {
-        //   //             this.fields[i] = fields[i]
-        //   //         }
-        //   //     }
-        //   // }
-        //   // console.log(this.fields)
-        // } else {
-        //   throw new Error('Expected a table in the from statement, but no table was provided')
-        // }
-        // if (fields && !Array.isArray(fields)) {
-        //   this.fields = [fields]
-        // }
-      }
-      prepareTable(table, schema) {
-        if (typeof table === 'string') {
-          return getRelation(table, schema)
-        } else if (table instanceof Query) {
-          return table
-        } else {
-          return new Select(table)
-        }
-      }
-      parse (string) {
-        let result = fieldRegEx.exec(string.trim())
-        if (result) {
-          let [, schema, table, alias] = result
-          return {
-            schema,
-            table,
-            alias
-          }
-        } else {
-          return string
-          // throw new Error(`Malformed table '${string}'`)
-        }
-        // let result = parseField(string)
-        // result.schema = result.table
-        // result.table = result.field
-        // delete result.field
-        // return result
-      }
-      getFields () {
-        return this.fields || []
-        // let {fields, ignore, alias} = this
-        // let tableFields = this.table.getFields()
-        // // let i, len
-        // if (fields) {
-        //   return fields.map(col => {
-        //     col = fieldRegEx.exec(col.trim())
-        //     if (col) {
-        //       let [, , field, fieldAlias] = col
-        //       field = `${alias}.${field}`
-        //       if (fieldAlias) {
-        //         field += ` AS ${fieldAlias}`
-        //       }
-        //       return field
-        //     }
-        //     throw new Error(`Malformed field '${col}'`)
-        //   })
-        // } else if (ignore) {
-        //   if (ignore === '*') {
-        //     return []
-        //   }
-        //   return tableFields
-        //     .filter(col => !ignore.includes(col))
-        //     .map(col => `${alias}.${col}`)
-        // } else {
-        //   return tableFields.map(col => `${alias}.${col}`)
-        // }
-      }
-      resolveTable (incoming) {
-        let { table, schema } = this
-        let sql = typeof table === 'string' ? table : table.resolve(incoming)
-        if (schema) {
-          sql = `${schema}.${sql}`
-        }
-        // if (!(table instanceof Relation)) {
-        //   sql = `(${sql})`
-        // }
-        return sql
+        return definition
       }
       resolve (incoming) {
-        // Object.assign(this, definition)
-        let definition = resolve(this.definition, incoming)
-        if (typeof definition === 'string') {
-          definition = this.parse(definition)
-          if (typeof definition === 'string') {
-            return definition
-          }
+        let definition = this.definition
+        if (stringOrFn(definition)) {
+          return resolve(definition, incoming)
         }
-        let { table, schema, alias, fields } = definition
+        let { table, schema, alias } = definition
         let sql
-        // let i, len, field
         if (table) {
-          table = this.prepareTable(table, schema)
-          sql = typeof table === 'string' ? table : table.resolve(incoming)
+          table = resolve(table, incoming)
+          sql = wordRegEx.test(table) ? table : `(${table})`
           if (schema) {
-            sql = `${schema}.${sql}`
+            sql = `${resolve(schema, incoming)}.${sql}`
           }
-          // if (fields) {
-          //     this.fields = []
-          //     for (i = 0, len = fields.length i < len i++) {
-          //         try {
-          //             this.fields[i] = parseField(fields[i])
-          //         } catch (e) {
-          //             this.fields[i] = fields[i]
-          //         }
-          //     }
-          // }
-          // console.log(this.fields)
+          if (alias) {
+            sql += ` AS ${alias}`
+          }
+          return sql
         } else {
           throw new Error('Expected a table in the from statement, but no table was provided')
         }
-        // if (fields && !Array.isArray(fields)) {
-        //   this.fields = [fields]
-        // }
       }
-      // resolve (incoming) {
-      //   return `${this.resolveTable(incoming)} AS ${this.alias}`
-      // }
-      // resolveFields (alias) {
-      //     let {table, fields, ignore} = this
-      //     let retFields = []
-      //     let i, len, field
-      //     if (!fields) {
-      //         fields = table.getFields()
-      //         if (table instanceof Relation) {
-      //             if (ignore) {
-      //                 fields = fields.filter(item => ignore.indexOf(item) === -1)
-      //             }
-      //             return `${alias}.${fields.join(`,${alias}.`)}`
-      //         }
-      //     }
-      //     return fields.map(field => typeof field === 'string' ? field : `${field.table || alias}.${field.field}${field.alias ? ` AS ${field.alias}`: ''}`)
-      // }
-      // resolve (incoming) {
-      //     let alias = this.resolveAlias(incoming)
-      //     let from = this.resolveFrom(incoming, alias)
-      //     if (ignoreFields) {
-      //         return from
-      //     }
-      //     let ret = {from}
-      //     ret.fields = this.resolveFields(alias)
-      //     return ret
-      // }
     }
 
     class Join extends From {
       resolve (incoming) {
         let sql = super.resolve(incoming)
-        let { type, on } = this
-        if (type !== ',') {
-          type = ` ${type}`
+        let definition = this.definition
+        if (typeof definition === 'object') {
+          let { type, on } = definition
+          if (type === ',') {
+            return `,${sql}`
+          }
+          if (on) {
+            sql += ` ON ${on}`
+          }
+          return ` ${type} ${sql}`
+        } else {
+          sql = sql.trim()
+          if (joinRegEx.test(sql)) {
+            return ` ${sql}`
+          } else {
+            return `,${sql}`
+          }
         }
-        if (on) {
-          sql += ` ON ${on}`
-        }
-        return `${type} ${sql}`
       }
-      get type () {return this._type || (this.on ? 'JOIN' : ',')}
+      getType (definition) {return definition.type || (definition.on ? 'JOIN' : ',')}
       set type (v) {this._type = v}
     }
 
-    // class Field {
-    //     constructor (definition, defaultTable) {
-    //         if (typeof definition === 'string') {
-    //             definition = parseField(definition)
-    //         }
-    //         Object.assign(this, definition)
-    //         if (!this.table && defaultTable) {
-    //             this.table = defaultTable
-    //         }
-    //     }
-    //     resolve () {
-    //         let {table, field, alias} = this
-    //         if (table) {
-    //             field = `${table}.${field}`
-    //         }
-    //         if (alias) {
-    //             field += ` AS ${alias}`
-    //         }
-    //     }
-    //     static parse (string) {
-    //         let result = fieldRegEx.exec(string.trim())
-    //         if (result) {
-    //             let [match, table, field, alias] = result
-    //             return {
-    //                 table,
-    //                 field,
-    //                 alias
-    //             }
-    //         } else {
-    //             throw new Error(`Malformed field '${string}'`)
-    //         }
-    //     }
-    // }
-
-    class Query {
-      constructor (definition, isDerived) {
-        if (!definition) {
-          throw new Error('Queries require a definition to be instantiated')
-        }
-        if (!isDerived) {
-          definition = compileStrings(definition)
-        }
-        this.definition = this.prepare(definition)
+    class Raw extends Base {
+      resolve (incoming) {
+        return resolve(this.definition, incoming)
       }
     }
 
-    class Raw extends Query {
-      // prepare (definition) {
-      //   if (compilable(definition)) {
-      //     this.rawQuery = Handlebars.compile(definition)
-      //   } else {
-      //     this.rawQuery = definition
-      //   }
-      // }
-      // resolve (incoming) {
-      //   let rawQuery = this.rawQuery
-      //   return typeof rawQuery === 'string' ? rawQuery : rawQuery(incoming)
-      // }
-    }
-
-    class Select extends Query {
+    class Select extends Base {
       prepare (definition) {
-        if (notObject(definition)) {
+        if (stringOrFn(definition)) {
           definition = {from: definition}
-          // this.from = definition
-        // } else {
-        //   Object.assign(this, definition)
         }
-        // this._aliasNum = 0
-        let {from, with: withClause} = definition
-        // let i, len
-        // definition.fields = fields = ensure(fields, Fields)
+        let {from, with: withClause, where} = definition
         if (from) {
           from = Array.isArray(from) ? from : [from]
           if (from.length === 0) {
             delete definition.from
           } else {
             definition.from = from.map((fromInstance, index) => ensure(fromInstance, index ? Join : From))
-            //   fromInstance = ensure(fromInstance, index ? Join : From)
-            //   // if (!fromInstance.alias) {
-            //   //   fromInstance.alias = this.nextAlias()
-            //   // }
-            //   // fields.addAll(fromInstance.getFields())
-            //   return fromInstance
-            // })
           }
         }
-        // if (where) {
-        //   this.where = new Logic(where)
-        // }
+        if (where) {
+          definition.where = ensure(where, Logic)
+        }
         return definition
       }
       resolve (incoming) {
-        let {from, with: withClause, distinct, fields, where, groupBy, orderBy} = this
+        let {from, with: withClause, distinct, fields, where, groupBy, orderBy} = this.definition
         let sql = 'SELECT'
-        // let fromClause = []
-        // let fields = []
-        // let i, len
-        // let fromFields
         if (distinct) {
           sql += ' DISTINCT'
           if (distinct !== true) {
             sql += ` ON (${distinct})`
           }
         }
-        // sql += ` ${this.fields}`
-        // if (from) {
-        //     fromFields = from.resolve(incoming)
-        //     fields = fields.concat(fromFields.fields)
-        //     fromClause.push(fromFields.from)
-        //     // sql += ` FROM ${from.resolve(incoming)}`
-        //     if (joins) {
-        //         for (i = 0, len = joins.length i < len i++) {
-        //             fromFields = joins[i].resolve(incoming)
-        //             fields = fields.concat(fromFields.fields)
-        //             fromClause.push(fromFields.from)
-        //             // sql += ` ${joins[i].resolve(incoming)}`
-        //         }
-        //     }
-        // }
-        // sql += ` ${fields}`
-        sql += ` ${resolveArray(fields.array, incoming)}`
-        // if (fromClause.length) {
-        //     sql += ` FROM ${fromClause}`
-        // }
+        sql += ` ${resolve(fields, incoming) || '*'}`
         if (from) {
           sql += ` FROM ${resolveArray(from, incoming, '')}`
-          // if (joins) {
-          //   sql += ` ${joins.map(join => join.resolve(incoming)).join(' ')}`
-          // }
         }
         if (where) {
           where = where.resolve(incoming)
           if (where) sql += ` WHERE ${where}`
         }
         if (groupBy) {
-          sql += ` GROUP BY ${groupBy}`
+          sql += ` GROUP BY ${resolve(groupBy, incoming)}`
         }
         if (orderBy) {
-          sql += ` ORDER BY ${orderBy}`
+          sql += ` ORDER BY ${resolve(orderBy, incoming)}`
         }
-        // console.log(sql)
         return sql
       }
-      getFields () {
-        return this.fields.names
-      }
-      nextAlias () {
-        return `_t${++this._aliasNum}`
-      }
-      // static prepareFrom (from) {
-      //     from = new From(from)
-      //     if (!from.alias) {
-      //         from.alias = this.nextAlias()
-      //     }
-      //     return from
-      // }
-      // static prepareTable (table) {
-      //   if (typeof table === 'string') {
-      //     // return getRelation(table)
-      //     return table
-      //   } else if (table instanceof Query) {
-      //     return table
-      //   } else {
-      //     return new Select(table)
-      //   }
-      // }
-      // static prepareJoin (join) {
-      //     join = new Join(join)
-      //     if (!join.alias) {
-      //         join.alias = this.nextAlias()
-      //     }
-      //     return join
-      // }
     }
-    class Insert extends Query {
+    class Insert extends Base {
       constructor (definition) {
         super(definition)
       }
     }
 
-    this.Query = Query
+    this.Base = Base
     this.Select = Select
     this.Insert = Insert
     this.Raw = Raw
@@ -626,5 +367,3 @@ class Connection {
 
 
 module.exports = Connection
-
-// module.exports = {Query, Select, Insert, Fields, Raw, Incoming}
