@@ -5,9 +5,9 @@ const Handlebars = require('handlebars')
 const fs = require('fs')
 
 const wordRegEx = /^\w+$/i
-const fieldRegEx = /^(?:"?(\w+)"?\.)?("?\w+"?)(?:(?:\s+as)?\s+"?(\w+)"?)?$/i
-const firstWord = /^(\w+)/
-const lastWord = /(\w+)$/
+// const fieldRegEx = /^(?:"?(\w+)"?\.)?("?\w+"?)(?:(?:\s+as)?\s+"?(\w+)"?)?$/i
+// const firstWord = /^(\w+)/
+// const lastWord = /(\w+)$/
 const joinRegEx = /^(?:natural\s+)?(?:(?:left|right|full|cross)\s+)?(?:(?:inner|outer)\s+)?join/i
 // const sorterRegEx = /^(\w+)(?:\s+(asc|desc))?$/i
 
@@ -82,17 +82,17 @@ const resolveArray = (array, incoming, join = ',') => {
 //   }
 // }
 
-const getRawFieldName = string => {
-  let result = lastWord.exec(string)
-  if (result) {
-    return result[1]
-  }
-  result = firstWord.exec(string)
-  if (result) {
-    return result[1]
-  }
-  return '?column?'
-}
+// const getRawFieldName = string => {
+//   let result = lastWord.exec(string)
+//   if (result) {
+//     return result[1]
+//   }
+//   result = firstWord.exec(string)
+//   if (result) {
+//     return result[1]
+//   }
+//   return '?column?'
+// }
 
 // const parseTable = string => {
 //     let result = parseField(string)
@@ -190,11 +190,17 @@ class Connection {
   }
 
   instanciateQueries () {
-    const getRelation = (table, schema = 'public') => this.database.getRelation(table, schema)
+    // const getRelation = (table, schema = 'public') => this.database.getRelation(table, schema)
 
     const createQuery = (definition, defaultType) => {
-      let type = definition.type || defaultType
-      delete definition.type
+      if (definition instanceof Base) {
+        return definition
+      }
+      if (stringOrFn(definition)) {
+        return new this.Raw(definition)
+      }
+      let type = definition.queryType || defaultType
+      delete definition.queryType
       type = type.toLowerCase()
       type = type[0].toUpperCase() + type.slice(1)
       if (this[type]) {
@@ -300,6 +306,57 @@ class Connection {
       set type (v) {this._type = v}
     }
 
+    class WithClause extends Base {
+      prepare (definition) {
+        if (typeof definition === 'object') {
+          if (!('queries' in definition)) {
+            definition = {queries: definition}
+          }
+          let queries = definition.queries
+          if (!Array.isArray(queries)) {
+            definition.queries = queries = [queries]
+          }
+          definition.queries = queries.map(query => ensure(query, WithQuery))
+        }
+        return definition
+      }
+      resolve (incoming) {
+        let definition = this.definition
+        if (stringOrFn(definition)) {
+          return resolve(definition, incoming)
+        }
+        let {queries, recursive} = definition
+        let sql = recursive ? 'RECURSIVE ' : ''
+        sql += resolveArray(queries, incoming)
+        return sql
+      }
+    }
+
+    class WithQuery extends Base {
+      prepare (definition) {
+        if (typeof definition === 'object') {
+          let query = definition.query
+          if (query && typeof query === 'object') {
+            definition.query = createQuery(query, 'select')
+          }
+        }
+        return definition
+      }
+      resolve (incoming) {
+        let definition = this.definition
+        if (stringOrFn(definition)) {
+          return resolve(definition, incoming)
+        }
+        let {alias, columns, query} = definition
+        let sql = alias
+        if (columns) {
+          sql += ` (${resolve(columns, incoming)})`
+        }
+        sql += ` AS (${resolve(query, incoming)})`
+        return sql
+      }
+    }
+
     class Raw extends Base {
       resolve (incoming) {
         return resolve(this.definition, incoming)
@@ -312,6 +369,9 @@ class Connection {
           definition = {from: definition}
         }
         let {from, with: withClause, where} = definition
+        if (withClause) {
+          definition.with = ensure(withClause, WithClause)
+        }
         if (from) {
           from = Array.isArray(from) ? from : [from]
           if (from.length === 0) {
@@ -328,6 +388,9 @@ class Connection {
       resolve (incoming) {
         let {from, with: withClause, distinct, fields, where, groupBy, orderBy} = this.definition
         let sql = 'SELECT'
+        if (withClause) {
+          sql = `WITH ${withClause.resolve(incoming)} ${sql}`
+        }
         if (distinct) {
           sql += ' DISTINCT'
           if (distinct !== true) {
@@ -352,14 +415,36 @@ class Connection {
       }
     }
     class Insert extends Base {
-      constructor (definition) {
-        super(definition)
+      prepare (definition) {
+        if (stringOrFn(definition)) {
+          definition = {into: definition}
+        }
+        return definition
+      }
+    }
+    class Multiple extends Base {
+      prepare (definition) {
+        if (Array.isArray(definition)) {
+          definition = {queries: definition}
+        }
+        let queries = definition.queries
+        if (queries) {
+          definition.queries = queries.map(query => createQuery(query, 'select'))
+        } else {
+          throw new Error('\'queries\' is required for class Multiple')
+        }
+        return definition
+      }
+      resolve (incoming) {
+        let {type = 'UNION', queries} = this.definition
+        return `(${resolveArray(queries, incoming, `) ${type} (`)})`
       }
     }
 
     this.Base = Base
     this.Select = Select
     this.Insert = Insert
+    this.Multiple = Multiple
     this.Raw = Raw
     this.Incoming = Incoming
   }
