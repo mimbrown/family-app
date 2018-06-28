@@ -1,12 +1,12 @@
 'use strict'
 
-const {Incoming, Select, Raw} = require('./lib/sql-commands')
+const {Context, Select, Raw} = require('./lib/sql-commands')
 const {execute} = require('./lib/query')
 
 const createMiddleware = (query, options = {}) => async function (req, res, next) {
-  let incoming = createIncoming(req)
+  let context = createContext(req)
   try {
-    let response = await execute(query.resolve(incoming), incoming.values)
+    let response = await execute(query.resolve(context), context.values)
     if (options.next) {
       req.sql = {response}
       next()
@@ -22,7 +22,7 @@ const createMiddleware = (query, options = {}) => async function (req, res, next
   }
 }
 
-const createIncoming = (req = {}) => new Incoming({
+const createContext = (req = {}) => new Context({
   query: req.query,
   path: req.params,
   headers: req.headers,
@@ -30,7 +30,7 @@ const createIncoming = (req = {}) => new Incoming({
 })
 
 module.exports = {
-  execute, createIncoming,
+  execute, createContext,
   //defineTables: tables => Promise.all(tables.map(resolveRelation)),
   get: (definition, options) => createMiddleware(new Select(definition), options),
   raw: (definition, options) => createMiddleware(new Raw(definition), options)

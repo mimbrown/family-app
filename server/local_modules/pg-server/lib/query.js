@@ -3,9 +3,16 @@
 const { Pool } = require('pg')
 const pool = new Pool()
 
-async function execute (query, values) {
+async function execute (executables) {
   const client = await pool.connect()
-  const response = await client.query(query, values)
+  if (!Array.isArray(executables)) {
+    executables = [executables]
+  }
+  let i = 0, len = executables.length
+  for (; i < len; i++) {
+    let {query, values} = executables[i]
+    let response = await client.query(query, values)
+  }
   await client.release()
   return response
 }

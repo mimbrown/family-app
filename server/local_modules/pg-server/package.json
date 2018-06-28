@@ -9,9 +9,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "async": "^2.5.0",
-    "pg": "^7.2.0",
-    "handlebars": "^4.0.10"
+    "async": "^2.6.1",
+    "handlebars": "^4.0.10",
+    "object-path": "^0.11.4",
+    "pg": "^7.2.0"
   },
   "optionalDependencies": {
     "commander": "^2.15.1"

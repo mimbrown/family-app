@@ -1,11 +1,12 @@
 'use strict'
 
-// const _ = require('lodash')
+const _ = require('lodash')
 const Handlebars = require('handlebars')
+const objectPath = require('object-path')
 const fs = require('fs')
 
 const wordRegEx = /^\w+$/i
-// const fieldRegEx = /^(?:"?(\w+)"?\.)?("?\w+"?)(?:(?:\s+as)?\s+"?(\w+)"?)?$/i
+const tableRegEx = /^(?:(?:(\w+)|"(.+)")\.)?(?:(\w+)|"(.+)")/i
 // const firstWord = /^(\w+)/
 // const lastWord = /(\w+)$/
 const joinRegEx = /^(?:natural\s+)?(?:(?:left|right|full|cross)\s+)?(?:(?:inner|outer)\s+)?join/i
@@ -31,35 +32,35 @@ const compileStrings = item => {
   return item
 }
 
-const resolve = (item, incoming, join) => {
+const resolve = (item, context, join) => {
   if (!item) {
     return item
   } else if (typeof item === 'function') {
-    incoming.$begin()
+    context.$begin()
     try {
-      item = item(incoming)
+      item = item(context)
       if (!item) {
-        incoming.$rollback()
+        context.$rollback()
       }
       return item
     } catch (e) {
-      incoming.$rollback()
+      context.$rollback()
       return null
     }
   } else if (typeof item.resolve === 'function') {
-    return item.resolve(incoming)
+    return item.resolve(context)
   } else if (Array.isArray(item)) {
-    return resolveArray(item, incoming, join)
+    return resolveArray(item, context, join)
   } else {
     return item
   }
 }
 
-const resolveArray = (array, incoming, join = ',') => {
+const resolveArray = (array, context, join = ',') => {
   let i = 0, len = array.length
   let str = '', toAdd
   for (; i < len; i++) {
-    toAdd = resolve(array[i], incoming)
+    toAdd = resolve(array[i], context)
     if (toAdd) {
       if (str) str += join
       str += toAdd
@@ -67,6 +68,8 @@ const resolveArray = (array, incoming, join = ',') => {
   }
   return str
 }
+
+const createValues = (values, columns, context) => `(${columns.map(column => column in values ? context.$value(values[column]) : 'DEFAULT')})`
 
 // const parseField = (string, asString) => {
 //   let result = fieldRegEx.exec(string.trim())
@@ -125,27 +128,50 @@ Handlebars.registerHelper('value', function (value) {
   return this.$value(value)
 })
 
+Handlebars.registerHelper('values', function (valuesArray) {
+  if (valuesArray === undefined) throw new Error('No values object found')
+  if (typeof valuesArray !== 'object') throw new Error('Values must be an object')
+  if (!Array.isArray(valuesArray)) {
+    valuesArray = [valuesArray]
+  }
+  return valuesArray.map(values => createValues(values, this.$getExpected(), this))
+})
+
 // const getRelation = table => tables[table]// || (tables[table] = new Relation(table))
 
-class Incoming {
+class Context {
   constructor (data) {
     Object.assign(this, data)
-    this.values = []
+    this.$values = []
+    this.$expected = []
   }
   $value (value) {
-    let values = this.values
+    let values = this.$values
     values.push(value)
     return `$${values.length}`
   }
+  $create (query) {
+    this.$query = query.resolve(this)
+  }
   $begin () {
-    this.count = this.values.length
+    this.$count = this.$values.length
   }
   $rollback () {
-    let {count, values} = this
-    let len = values.length
-    if (len > count) {
-      values.splice(count, len - count)
+    let {$count, $values} = this
+    let len = $values.length
+    if (len > $count) {
+      $values.splice($count, len - $count)
     }
+  }
+  $pushExpected (expected) {
+    this.$expected.push(expected)
+  }
+  $popExpected () {
+    this.$expected.pop()
+  }
+  $getExpected () {
+    let expected = this.$expected
+    return expected[expected.length - 1]
   }
 }
 
@@ -199,8 +225,8 @@ class Connection {
       if (stringOrFn(definition)) {
         return new this.Raw(definition)
       }
-      let type = definition.queryType || defaultType
-      delete definition.queryType
+      let type = definition.qt || defaultType
+      delete definition.qt
       type = type.toLowerCase()
       type = type[0].toUpperCase() + type.slice(1)
       if (this[type]) {
@@ -210,42 +236,60 @@ class Connection {
       }
     }
 
-    class List {
-      constructor (items) {
-        this.init(items)
-      }
-      init (items) {
-        this.array = []
-        this.addAll(items)
-      }
-      add (...items) {
-        let {array} = this
-        let i, len
-        for (i = 0, len = items.length; i < len; i++) {
-          array.push(this.prepare(items[i]))
-        }
-      }
-      addAll (items) {
-        return this.add.apply(this, items)
+    const getRelation = table => {
+      let result = tableRegEx.exec(table.trim())
+      if (result) {
+        let [, schema1, schema2, table1, table2] = result
+        return this.database.getRelation(table1 || table2, schema1 || schema2)
+      } else {
+        throw new Error(`Malformed table '${table}'`)
       }
     }
 
-    class Logic extends List {
-      constructor (items, join = 'AND') {
-        super(items)
-        this.join = join
-      }
-      resolve (incoming) {
-        return resolveArray(this.array, incoming, ` ${this.join} `)
-      }
-      prepare (item) {
-        if (item instanceof Array) {
-          return new Logic (item, this.join === 'AND' ? 'OR' : 'AND')
-        // } else if (typeof item === 'string' && compilable(item)) {
-        //   return Handlebars.compile(item)
-        } else {
-          return item
+    class Logic extends Base {
+      prepare (definition) {
+        if (Array.isArray(definition)) {
+          definition = {array: definition}
+        } else if (!definition.array) {
+          definition = {array: [definition]}
         }
+        if (!definition.join) {
+          definition.join = 'AND'
+        }
+        let join = definition.join.toLowerCase()
+        definition.array.map(item => {
+          if (typeof item === 'string') {
+            return item
+          } else if (Array.isArray(item)) {
+            return {
+              array: item,
+              join: join === 'and' ? 'OR' : 'AND'
+            }
+          }
+        })
+        return definition
+      }
+      resolve (context) {
+        let { array, join } = this.definition
+        return resolveArray(array, context, ` ${join} `)
+      }
+    }
+
+    class Table extends Base {
+      resolve (context) {
+        let definition = this.definition
+        if (stringOrFn(definition)) {
+          return resolve(definition, context)
+        }
+        let { table, schema, alias } = definition
+        let sql = resolve(table, context)
+        if (schema) {
+          sql = `${resolve(schema, context)}.${sql}`
+        }
+        if (alias) {
+          sql += ` AS ${alias}`
+        }
+        return sql
       }
     }
 
@@ -257,18 +301,18 @@ class Connection {
         }
         return definition
       }
-      resolve (incoming) {
+      resolve (context) {
         let definition = this.definition
         if (stringOrFn(definition)) {
-          return resolve(definition, incoming)
+          return resolve(definition, context)
         }
         let { table, schema, alias } = definition
         let sql
         if (table) {
-          table = resolve(table, incoming)
+          table = resolve(table, context)
           sql = wordRegEx.test(table) ? table : `(${table})`
           if (schema) {
-            sql = `${resolve(schema, incoming)}.${sql}`
+            sql = `${resolve(schema, context)}.${sql}`
           }
           if (alias) {
             sql += ` AS ${alias}`
@@ -281,8 +325,8 @@ class Connection {
     }
 
     class Join extends From {
-      resolve (incoming) {
-        let sql = super.resolve(incoming)
+      resolve (context) {
+        let sql = super.resolve(context)
         let definition = this.definition
         if (typeof definition === 'object') {
           let { type, on } = definition
@@ -320,14 +364,14 @@ class Connection {
         }
         return definition
       }
-      resolve (incoming) {
+      resolve (context) {
         let definition = this.definition
         if (stringOrFn(definition)) {
-          return resolve(definition, incoming)
+          return resolve(definition, context)
         }
         let {queries, recursive} = definition
         let sql = recursive ? 'RECURSIVE ' : ''
-        sql += resolveArray(queries, incoming)
+        sql += resolveArray(queries, context)
         return sql
       }
     }
@@ -342,24 +386,24 @@ class Connection {
         }
         return definition
       }
-      resolve (incoming) {
+      resolve (context) {
         let definition = this.definition
         if (stringOrFn(definition)) {
-          return resolve(definition, incoming)
+          return resolve(definition, context)
         }
         let {alias, columns, query} = definition
         let sql = alias
         if (columns) {
-          sql += ` (${resolve(columns, incoming)})`
+          sql += ` (${resolve(columns, context)})`
         }
-        sql += ` AS (${resolve(query, incoming)})`
+        sql += ` AS (${resolve(query, context)})`
         return sql
       }
     }
 
     class Raw extends Base {
-      resolve (incoming) {
-        return resolve(this.definition, incoming)
+      resolve (context) {
+        return resolve(this.definition, context)
       }
     }
 
@@ -368,7 +412,7 @@ class Connection {
         if (stringOrFn(definition)) {
           definition = {from: definition}
         }
-        let {from, with: withClause, where} = definition
+        let {from, with: withClause, where, having} = definition
         if (withClause) {
           definition.with = ensure(withClause, WithClause)
         }
@@ -383,13 +427,16 @@ class Connection {
         if (where) {
           definition.where = ensure(where, Logic)
         }
+        if (having) {
+          definition.having = ensure(having, Logic)
+        }
         return definition
       }
-      resolve (incoming) {
-        let {from, with: withClause, distinct, fields, where, groupBy, orderBy} = this.definition
+      resolve (context) {
+        let {from, with: withClause, distinct, fields, where, groupBy, having, orderBy, limit, offset} = this.definition
         let sql = 'SELECT'
         if (withClause) {
-          sql = `WITH ${withClause.resolve(incoming)} ${sql}`
+          sql = `WITH ${withClause.resolve(context)} ${sql}`
         }
         if (distinct) {
           sql += ' DISTINCT'
@@ -397,19 +444,33 @@ class Connection {
             sql += ` ON (${distinct})`
           }
         }
-        sql += ` ${resolve(fields, incoming) || '*'}`
+        sql += ` ${resolve(fields, context) || '*'}`
         if (from) {
-          sql += ` FROM ${resolveArray(from, incoming, '')}`
+          sql += ` FROM ${resolveArray(from, context, '')}`
         }
         if (where) {
-          where = where.resolve(incoming)
+          where = where.resolve(context)
           if (where) sql += ` WHERE ${where}`
         }
         if (groupBy) {
-          sql += ` GROUP BY ${resolve(groupBy, incoming)}`
+          groupBy = resolve(groupBy, context)
+          sql += ` GROUP BY ${groupBy}`
+        }
+        if (having) {
+          having = having.resolve(context)
+          if (having) sql += ` HAVING ${having}`
         }
         if (orderBy) {
-          sql += ` ORDER BY ${resolve(orderBy, incoming)}`
+          orderBy = resolve(orderBy, context)
+          if (orderBy) sql += ` ORDER BY ${orderBy}`
+        }
+        if (limit) {
+          limit = resolve(limit, context)
+          if (limit) sql += ` LIMIT ${limit}`
+        }
+        if (offset) {
+          offset = resolve(offset, context)
+          if (offset) sql += ` OFFSET ${offset}`
         }
         return sql
       }
@@ -419,9 +480,74 @@ class Connection {
         if (stringOrFn(definition)) {
           definition = {into: definition}
         }
+        let {into, with: withClause, values} = definition
+        if (into) {
+          definition.into = ensure(into, Table)
+        }
+        if (withClause) {
+          definition.with = ensure(withClause, WithClause)
+        }
+        if (values && typeof values === 'object') {
+          definition.values = createQuery(values, 'select')
+        }
         return definition
       }
+      resolve (context) {
+        let {into, columns, with: withClause, values, returning} = this.definition
+        into = resolve(into, context)
+        let sql = `INSERT INTO ${into}`
+        if (withClause) {
+          sql = `WITH ${withClause.resolve(context)} ${sql}`
+        }
+        if (!columns) {
+          columns = _.keys(getRelation(into).columns)
+        }
+        sql += ` (${resolve(columns, context)})`
+        context.$pushExpected(columns)
+        if (stringOrFn(values)) {
+          sql += ` VALUES ${resolve(values, context)}`
+        } else {
+          sql += ` ${values.resolve(context)}`
+        }
+        context.$popExpected()
+        if (returning) {
+          sql += ` RETURNING ${resolve(returning, context)}`
+        }
+        return sql
+      }
     }
+    class Each extends Base {
+      prepare (definition) {
+        definition.query = createQuery(definition.query, 'select')
+        return definition
+      }
+      resolve (context) {
+        let {path, query} = this.definition
+        let array = objectPath.get(context, path)
+        if (!Array.isArray(array)) {
+          throw new Error(`Object at path '${path}' is not an array`)
+        }
+        return array.map(item => {
+          let itemContext = new Context(item)
+          itemContext.$parentContext = context
+          itemContext.$create(query)
+          return itemContext
+        })
+      }
+    }
+    // class Values extends Base {
+    //   prepare (definition) {
+    //     if (!Array.isArray(definition)) {
+    //       definition = [definition]
+    //     }
+    //     if (!Array.isArray(definition)[0]) {
+    //       definition = [definition]
+    //     }
+    //   }
+    //   resolve (context) {
+    //     return this.definition.map(values => `(${resolve(values, context)})`).join()
+    //   }
+    // }
     class Multiple extends Base {
       prepare (definition) {
         if (Array.isArray(definition)) {
@@ -435,20 +561,21 @@ class Connection {
         }
         return definition
       }
-      resolve (incoming) {
+      resolve (context) {
         let {type = 'UNION', queries} = this.definition
-        return `(${resolveArray(queries, incoming, `) ${type} (`)})`
+        return `(${resolveArray(queries, context, `) ${type} (`)})`
       }
     }
 
     this.Base = Base
     this.Select = Select
     this.Insert = Insert
+    this.Each = Each
     this.Multiple = Multiple
     this.Raw = Raw
-    this.Incoming = Incoming
+    this.Context = Context
+    this.createQuery = createQuery
   }
 }
-
 
 module.exports = Connection
