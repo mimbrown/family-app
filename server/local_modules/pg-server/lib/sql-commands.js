@@ -69,7 +69,7 @@ const resolveArray = (array, context, join = ',') => {
   return str
 }
 
-const createValues = (values, columns, context) => `(${columns.map(column => column in values ? context.$value(values[column]) : 'DEFAULT')})`
+const createValues = (values, columns, defaults, context) => `(${columns.map(column => column in values ? context.$value(values[column]) : column in defaults ? defaults[column] : 'DEFAULT')})`
 
 // const parseField = (string, asString) => {
 //   let result = fieldRegEx.exec(string.trim())
@@ -128,14 +128,14 @@ Handlebars.registerHelper('value', function (value) {
   return this.$value(value)
 })
 
-Handlebars.registerHelper('values', function (valuesArray) {
-  if (valuesArray === undefined) throw new Error('No values object found')
-  if (typeof valuesArray !== 'object') throw new Error('Values must be an object')
-  if (!Array.isArray(valuesArray)) {
-    valuesArray = [valuesArray]
-  }
-  return valuesArray.map(values => createValues(values, this.$getExpected(), this))
-})
+// Handlebars.registerHelper('values', function (valuesArray) {
+//   if (valuesArray === undefined) throw new Error('No values object found')
+//   if (typeof valuesArray !== 'object') throw new Error('Values must be an object')
+//   if (!Array.isArray(valuesArray)) {
+//     valuesArray = [valuesArray]
+//   }
+//   return valuesArray.map(values => createValues(values, this.$getExpected(), this))
+// })
 
 // const getRelation = table => tables[table]// || (tables[table] = new Relation(table))
 
@@ -162,16 +162,6 @@ class Context {
     if (len > $count) {
       $values.splice($count, len - $count)
     }
-  }
-  $pushExpected (expected) {
-    this.$expected.push(expected)
-  }
-  $popExpected () {
-    this.$expected.pop()
-  }
-  $getExpected () {
-    let expected = this.$expected
-    return expected[expected.length - 1]
   }
 }
 
@@ -493,25 +483,50 @@ class Connection {
         return definition
       }
       resolve (context) {
-        let {into, columns, with: withClause, values, returning} = this.definition
+        let {into, columns, with: withClause, values = [], valuesPath, defaultValues = {}, onConflict, upsert, returning} = this.definition
         into = resolve(into, context)
+        let relation
+        if (!columns || upsert) {
+          relation = getRelation(into)
+        }
         let sql = `INSERT INTO ${into}`
         if (withClause) {
           sql = `WITH ${withClause.resolve(context)} ${sql}`
         }
         if (!columns) {
-          columns = _.keys(getRelation(into).columns)
+          columns = _.keys(relation.columns)
         }
         sql += ` (${resolve(columns, context)})`
-        context.$pushExpected(columns)
-        if (stringOrFn(values)) {
-          sql += ` VALUES ${resolve(values, context)}`
-        } else {
-          sql += ` ${values.resolve(context)}`
+        if (!Array.isArray(values)) {
+          values = [values]
         }
-        context.$popExpected()
+        values = values.map(value => `(${resolve(value, context)})`)
+        if (typeof valuesPath === 'string') {
+          let valuesArray = objectPath.get(context, valuesPath)
+          if (typeof valuesArray !== 'object') throw new Error('Values must be an object')
+          if (!Array.isArray(valuesArray)) {
+            valuesArray = [valuesArray]
+          }
+          values.push(valuesArray.map(values => createValues(values, columns, defaultValues, context)).join())
+        }
+        values = values.join()
+        if (values) {
+          sql += ` VALUES ${values}`
+        }
+        if (onConflict) {
+          onConflict = resolve(onConflict, context)
+          if (onConflict) {
+            sql += ` ON CONFLICT ${onConflict}`
+          }
+        } else if (upsert) {
+          let primaryColumns = relation.primaryKey.columns
+          sql += ` ON CONFLICT ON CONSTRAINT ${relation.primaryKey.name} DO UPDATE SET ${columns.filter(column => !primaryColumns.includes(column)).map(column => `${column} = EXCLUDED.${column}`)}`
+        }
         if (returning) {
-          sql += ` RETURNING ${resolve(returning, context)}`
+          returning = resolve(returning, context)
+          if (returning) {
+            sql += ` RETURNING ${returning}`
+          }
         }
         return sql
       }
