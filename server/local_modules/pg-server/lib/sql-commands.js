@@ -485,7 +485,7 @@ class Connection {
       resolve (context) {
         let {into, columns, with: withClause, values = [], valuesPath, defaultValues = {}, onConflict, upsert, returning} = this.definition
         into = resolve(into, context)
-        let relation
+        let relation, valuesArray
         if (!columns || upsert) {
           relation = getRelation(into)
         }
@@ -497,12 +497,13 @@ class Connection {
           columns = _.keys(relation.columns)
         }
         sql += ` (${resolve(columns, context)})`
-        if (!Array.isArray(values)) {
-          values = [values]
+        if (Array.isArray(values)) {
+          values = values.map(value => `(${resolve(value, context)})`)
+        } else {
+          values = [resolve(values, context)]
         }
-        values = values.map(value => `(${resolve(value, context)})`)
         if (typeof valuesPath === 'string') {
-          let valuesArray = objectPath.get(context, valuesPath)
+          valuesArray = objectPath.get(context, valuesPath)
           if (typeof valuesArray !== 'object') throw new Error('Values must be an object')
           if (!Array.isArray(valuesArray)) {
             valuesArray = [valuesArray]
@@ -518,9 +519,142 @@ class Connection {
           if (onConflict) {
             sql += ` ON CONFLICT ${onConflict}`
           }
-        } else if (upsert) {
+        } else if (upsert && valuesArray) {
+          if (valuesArray.length > 1) {
+            throw new Error('Cannot upsert more than one row in a single query')
+          }
           let primaryColumns = relation.primaryKey.columns
-          sql += ` ON CONFLICT ON CONSTRAINT ${relation.primaryKey.name} DO UPDATE SET ${columns.filter(column => !primaryColumns.includes(column)).map(column => `${column} = EXCLUDED.${column}`)}`
+          let actualValues = valuesArray[0]
+          sql += ` ON CONFLICT ON CONSTRAINT ${relation.primaryKey.name} DO UPDATE SET ${columns.filter(column => !primaryColumns.includes(column) && column in actualValues).map(column => `${column} = EXCLUDED.${column}`)}`
+        }
+        if (returning) {
+          returning = resolve(returning, context)
+          if (returning) {
+            sql += ` RETURNING ${returning}`
+          }
+        }
+        return sql
+      }
+    }
+    class Update extends Base {
+      prepare (definition) {
+        if (stringOrFn(definition)) {
+          definition = {table: definition}
+        }
+        let {table, with: withClause, from, where} = definition
+        if (table) {
+          definition.table = ensure(table, Table)
+        }
+        if (withClause) {
+          definition.with = ensure(withClause, WithClause)
+        }
+        if (from) {
+          from = Array.isArray(from) ? from : [from]
+          if (from.length === 0) {
+            delete definition.from
+          } else {
+            definition.from = from.map((fromInstance, index) => ensure(fromInstance, index ? Join : From))
+          }
+        }
+        if (where) {
+          definition.where = ensure(where, Logic)
+        }
+        return definition
+      }
+      resolve (context) {
+        let {table, only, columns, columnMap = {}, with: withClause, valuesPath, defaultValues = {}, from, where, returning} = this.definition
+        table = resolve(table, context)
+        let values
+        let sql = 'UPDATE'
+        if (only) {
+          sql += ' ONLY'
+        }
+        sql += ` ${table}`
+        if (withClause) {
+          sql = `WITH ${withClause.resolve(context)} ${sql}`
+        }
+        if (!columns) {
+          columns = _.keys(getRelation(table).columns)
+        }
+        if (typeof valuesPath === 'string') {
+          values = objectPath.get(context, valuesPath)
+          if (typeof values !== 'object') throw new Error('Values must be an object')
+          let validatedValues = {}
+          let k, mapped
+          for (k in values) {
+            if (k in columnMap) {
+              mapped = columnMap[k]
+              if (columns.includes(mapped)) {
+                validatedValues[mapped] = values[k]
+              }
+            } else if (columns.includes(k)) {
+              validatedValues[k] = values[k]
+            }
+          }
+          validatedValues = Object.assign({}, defaultValues, validatedValues)
+          values = []
+          for (k in validatedValues) {
+            values.push(`${k} = ${context.$value(validatedValues[k])}`)
+          }
+          sql += ` SET ${values}`
+        }
+        if (from) {
+          sql += ` FROM ${resolveArray(from, context, '')}`
+        }
+        if (where) {
+          where = where.resolve(context)
+          if (where) sql += ` WHERE ${where}`
+        }
+        if (returning) {
+          returning = resolve(returning, context)
+          if (returning) {
+            sql += ` RETURNING ${returning}`
+          }
+        }
+        return sql
+      }
+    }
+    class Delete extends Base {
+      prepare (definition) {
+        if (stringOrFn(definition)) {
+          definition = {from: definition}
+        }
+        let {from, with: withClause, using, where} = definition
+        if (from) {
+          definition.from = ensure(from, Table)
+        }
+        if (withClause) {
+          definition.with = ensure(withClause, WithClause)
+        }
+        if (using) {
+          using = Array.isArray(using) ? using : [using]
+          if (using.length === 0) {
+            delete definition.using
+          } else {
+            definition.using = using.map((usingInstance, index) => ensure(usingInstance, index ? Join : From))
+          }
+        }
+        if (where) {
+          definition.where = ensure(where, Logic)
+        }
+        return definition
+      }
+      resolve (context) {
+        let {from, only, with: withClause, using, where, returning} = this.definition
+        let sql = 'DELETE FROM'
+        if (only) {
+          sql += ' ONLY'
+        }
+        sql += ` ${resolve(from, context)}`
+        if (withClause) {
+          sql = `WITH ${withClause.resolve(context)} ${sql}`
+        }
+        if (using) {
+          sql += ` USING ${resolveArray(using, context, '')}`
+        }
+        if (where) {
+          where = where.resolve(context)
+          if (where) sql += ` WHERE ${where}`
         }
         if (returning) {
           returning = resolve(returning, context)
@@ -585,6 +719,8 @@ class Connection {
     this.Base = Base
     this.Select = Select
     this.Insert = Insert
+    this.Update = Update
+    this.Delete = Delete
     this.Each = Each
     this.Multiple = Multiple
     this.Raw = Raw

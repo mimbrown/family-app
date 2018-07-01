@@ -144,5 +144,35 @@
         }]
       }]
     }
+  }, {
+    "query": {
+      "qt": "update",
+      "table": "\"tenant-1\".project",
+      "where": "project_id = {{value path.id}}",
+      "valuesPath": "body.toUpdate"
+    },
+    "incoming": {
+      "path": {
+        "id": 2
+      },
+      "body": {
+        "toUpdate": {
+          "client_id": 12,
+          "name": "Project Awesome"
+        }
+      }
+    }
+  }, {
+    "query": {
+      "qt": "delete",
+      "from": "\"tenant-1\".project",
+      "where": "project_id = {{value path.id}}",
+      "returning": "*"
+    },
+    "incoming": {
+      "path": {
+        "id": 48
+      }
+    }
   }]
 }]
