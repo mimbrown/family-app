@@ -142,8 +142,6 @@ Handlebars.registerHelper('value', function (value) {
 class Context {
   constructor (data) {
     Object.assign(this, data)
-    this.$values = []
-    this.$expected = []
   }
   $value (value) {
     let values = this.$values
@@ -151,7 +149,11 @@ class Context {
     return `$${values.length}`
   }
   $create (query) {
-    this.$query = query.resolve(this)
+    if (query instanceof MultiQuery) {
+      return query.resolve(this)
+    } else {
+      return {values: this.$values = [], query: query.resolve(this)}
+    }
   }
   $begin () {
     this.$count = this.$values.length
@@ -195,6 +197,8 @@ class Base {
     this.definition = compileStrings(this.prepare ? this.prepare(definition) : definition)
   }
 }
+
+class MultiQuery extends Base {}
 
 class Connection {
   constructor (definitions) {
@@ -665,7 +669,7 @@ class Connection {
         return sql
       }
     }
-    class Each extends Base {
+    class Each extends MultiQuery {
       prepare (definition) {
         definition.query = createQuery(definition.query, 'select')
         return definition
@@ -684,19 +688,45 @@ class Connection {
         })
       }
     }
-    // class Values extends Base {
-    //   prepare (definition) {
-    //     if (!Array.isArray(definition)) {
-    //       definition = [definition]
-    //     }
-    //     if (!Array.isArray(definition)[0]) {
-    //       definition = [definition]
-    //     }
-    //   }
-    //   resolve (context) {
-    //     return this.definition.map(values => `(${resolve(values, context)})`).join()
-    //   }
-    // }
+    class Formatted extends MultiQuery {
+      prepare (definition) {
+        this.queries = {}
+        return this.createShell(definition)
+      }
+      createShell (definition, path = []) {
+        let temp
+        if (typeof definition === 'object') {
+          definition = _.clone(definition)
+          if (definition.query) {
+            definition.query = createQuery(definition.query, 'select')
+            this.queries[path.join('.')] = definition
+            return undefined
+          } else {
+            for (let k in definition) {
+              path.push(k)
+              temp = this.createShell(definition[k], path)
+              if (temp === undefined) {
+                delete definition[k]
+              } else {
+                definition[k] = temp
+              }
+              path.pop()
+            }
+          }
+        }
+        return definition
+      }
+      resolve (context) {
+        let queries = this.queries
+        let executables = []
+        let executable, options
+        for (let k in queries) {
+          options = queries[k]
+          executable = context.$create(options.query)
+          //TODO
+        }
+      }
+    }
     class Multiple extends Base {
       prepare (definition) {
         if (Array.isArray(definition)) {
@@ -723,6 +753,7 @@ class Connection {
     this.Delete = Delete
     this.Each = Each
     this.Multiple = Multiple
+    this.Formatted = Formatted
     this.Raw = Raw
     this.Context = Context
     this.createQuery = createQuery

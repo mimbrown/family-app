@@ -174,5 +174,24 @@
         "id": 48
       }
     }
+  }, {
+    "query": {
+      "qt": "formatted",
+      "string": "testing",
+      "empty": {},
+      "normal": {
+        "query": {
+          "from": "project"
+        }
+      },
+      "nested": {
+        "first": {
+          "query": {
+            "fields": "COUNT(*) AS cnt",
+            "from": "client"
+          }
+        }
+      }
+    }
   }]
 }]
