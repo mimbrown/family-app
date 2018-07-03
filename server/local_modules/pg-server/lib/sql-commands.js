@@ -469,6 +469,7 @@ class Connection {
         return sql
       }
     }
+
     class Insert extends Base {
       prepare (definition) {
         if (stringOrFn(definition)) {
@@ -540,6 +541,7 @@ class Connection {
         return sql
       }
     }
+
     class Update extends Base {
       prepare (definition) {
         if (stringOrFn(definition)) {
@@ -618,6 +620,7 @@ class Connection {
         return sql
       }
     }
+
     class Delete extends Base {
       prepare (definition) {
         if (stringOrFn(definition)) {
@@ -669,6 +672,26 @@ class Connection {
         return sql
       }
     }
+
+    class Multiple extends Base {
+      prepare (definition) {
+        if (Array.isArray(definition)) {
+          definition = {queries: definition}
+        }
+        let queries = definition.queries
+        if (queries) {
+          definition.queries = queries.map(query => createQuery(query, 'select'))
+        } else {
+          throw new Error('\'queries\' is required for class Multiple')
+        }
+        return definition
+      }
+      resolve (context) {
+        let {type = 'UNION', queries} = this.definition
+        return `(${resolveArray(queries, context, `) ${type} (`)})`
+      }
+    }
+
     class Each extends MultiQuery {
       prepare (definition) {
         definition.query = createQuery(definition.query, 'select')
@@ -688,6 +711,7 @@ class Connection {
         })
       }
     }
+    
     class Formatted extends MultiQuery {
       prepare (definition) {
         this.queries = {}
@@ -727,22 +751,21 @@ class Connection {
         }
       }
     }
-    class Multiple extends Base {
+    
+    class Series extends MultiQuery {
       prepare (definition) {
-        if (Array.isArray(definition)) {
-          definition = {queries: definition}
-        }
-        let queries = definition.queries
-        if (queries) {
-          definition.queries = queries.map(query => createQuery(query, 'select'))
-        } else {
-          throw new Error('\'queries\' is required for class Multiple')
-        }
+        definition.queries = definition.queries.map(item => {
+          item = _.clone(item)
+          item.query = createQuery(item.query, 'select')
+          return item
+        })
         return definition
       }
       resolve (context) {
-        let {type = 'UNION', queries} = this.definition
-        return `(${resolveArray(queries, context, `) ${type} (`)})`
+        if (!context.returned) {
+          context.returned = {}
+        }
+        return this
       }
     }
 
@@ -754,6 +777,7 @@ class Connection {
     this.Each = Each
     this.Multiple = Multiple
     this.Formatted = Formatted
+    this.Series = Series
     this.Raw = Raw
     this.Context = Context
     this.createQuery = createQuery
