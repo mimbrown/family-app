@@ -149,10 +149,13 @@ class Context {
     return `$${values.length}`
   }
   $create (query) {
-    if (query instanceof MultiQuery) {
-      return query.resolve(this)
+    if (query instanceof BlockQuery) {
+      return [query.resolve(this), this]
+    } else if (query instanceof MultiQuery) {
+      return [query.resolve(this), query]
     } else {
-      return {values: this.$values = [], query: query.resolve(this)}
+      this.$values = []
+      return [query.resolve(this), this.$values]
     }
   }
   $begin () {
@@ -199,6 +202,7 @@ class Base {
 }
 
 class MultiQuery extends Base {}
+class BlockQuery extends MultiQuery {}
 
 class Connection {
   constructor (definitions) {
@@ -706,8 +710,7 @@ class Connection {
         return array.map(item => {
           let itemContext = new Context(item)
           itemContext.$parentContext = context
-          itemContext.$create(query)
-          return itemContext
+          return itemContext.$create(query)
         })
       }
     }
@@ -743,22 +746,41 @@ class Connection {
       resolve (context) {
         let queries = this.queries
         let executables = []
-        let executable, options
+        let executable, item, options
         for (let k in queries) {
-          options = queries[k]
-          executable = context.$create(options.query)
-          //TODO
+          item = queries[k]
+          options = item.options
+          executable = context.$create(item.query)
+          if (options) {
+            executable.push(options)
+          }
+          // console.log(executable)
+          executables.push(executable)
         }
+        return executables
+      }
+      format (returns) {
+        let {queries, definition} = this
+        definition = _.cloneDeep(definition)
+        let count = 0
+        for (let k in queries) {
+          objectPath.set(definition, k, returns[count++])
+        }
+        return definition
       }
     }
     
-    class Series extends MultiQuery {
+    class Series extends BlockQuery {
       prepare (definition) {
         definition.queries = definition.queries.map(item => {
           item = _.clone(item)
           item.query = createQuery(item.query, 'select')
           return item
         })
+        if (definition.transaction) {
+          definition.queries.unshift('BEGIN')
+          definition.queries.push('COMMIT')
+        }
         return definition
       }
       resolve (context) {

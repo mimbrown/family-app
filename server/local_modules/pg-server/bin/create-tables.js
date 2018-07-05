@@ -1,4 +1,5 @@
 const Program = require('commander')
+const {execute} = require('../lib/execute')
 
 Program
   .version('0.0.1')

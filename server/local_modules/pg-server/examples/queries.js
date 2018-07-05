@@ -7,21 +7,18 @@ definitions.forEach((definition, outerIndex) => {
   definition.examples.forEach((example, innerIndex) => {
     console.log(`\n------- Example ${outerIndex+1}.${innerIndex+1}`)
     let query = connection.createQuery(example.query, 'select')
-    if (query instanceof connection.Formatted) {
-      console.log(query)
-      return
-    }
     let context = new connection.Context(example.incoming)
-    context.$create(query)
+    let created = context.$create(query)
     if (query instanceof connection.Each) {
-      context.$query.forEach((context, index) => {
+      // console.log(created)
+      created[0].forEach((executable, index) => {
         console.log(`---------- Query ${index+1}`)
-        console.log(`QUERY:  ${context.$query}`)
-        console.log(`VALUES: ${context.$values}`)
+        console.log(`QUERY:  ${executable[0]}`)
+        console.log(`VALUES: ${executable[1]}`)
       })
     } else {
-      console.log(`QUERY:  ${context.$query}`)
-      console.log(`VALUES: ${context.$values}`)
+      console.log(`QUERY:  ${created[0]}`)
+      console.log(`VALUES: ${created[1]}`)
     }
   })
 })

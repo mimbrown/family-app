@@ -24,32 +24,24 @@ let connection = new Connection({
 })
 
 let query = connection.createQuery({
-  qt: 'series',
-  transaction: true,
-  format: {
-    test: 17
-  },
-  queries: [
-    {
+  qt: 'formatted',
+  metadata: {
+    count: {
       query: {
-        fields: 'FLOOR(COUNT(*)/2) AS cnt',
+        fields: 'COUNT(*) cnt',
         from: 'test'
       },
       options: {
         singleValue: 'cnt'
-      },
-      name: 'half',
-      return: 'metadata.numRows'
-    },
-    {
-      query: {
-        from: 'test',
-        limit: '{{returned.half}}'
-      },
-      name: 'rows',
-      return: true
+      }
     }
-  ]
+  },
+  rows: {
+    query: {
+      from: 'test',
+      limit: 2
+    }
+  }
 })
 
 let context = new connection.Context()
